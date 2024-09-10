@@ -7,13 +7,18 @@ Original file is located at
     https://colab.research.google.com/drive/1Lbs32kRiqPcsAAgvITrgRDODpLazD6p1
 """
 
-import pandas as pd
+import re
 import numpy as np
-import seaborn as sns
-import zipfile as zp
-import os
+import pandas as pd
 from matplotlib import pyplot as plt
+import seaborn as sns
+import nltk
+from nltk.corpus import stopwords
+import xgboost as xgb
 from sklearn.preprocessing import StandardScaler
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
 # Read the data
 df = pd.read_csv('twitter_user_data.csv', encoding='ISO-8859-1')
@@ -22,7 +27,7 @@ df = pd.read_csv('twitter_user_data.csv', encoding='ISO-8859-1')
 df.info()
 df.head()
 
-"""# Handling Missing Data"""
+# Handling Missing Data
 
 # Dropping columns with more than 90% missing values
 df_cleaned = df.drop(columns=['gender_gold', 'profile_yn_gold', 'tweet_coord'])
@@ -42,7 +47,7 @@ df_cleaned = df_cleaned.drop(columns=['profile_yn'])
 df_cleaned.info()  # Display the structure of the cleaned dataset
 df_cleaned.head()  # Display the first few rows of the cleaned dataset
 
-"""# Exploratory Data Analysis (EDA)"""
+# Exploratory Data Analysis (EDA)
 
 # Distribution of gender
 plt.figure(figsize=(8, 6))
@@ -101,15 +106,12 @@ plt.ylabel('Sidebar Color')
 plt.xlabel('Count')
 plt.show()
 
-"""# Preprocessing"""
+# Preprocessing
 
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
 
 # drop columns that are irrelevant
 
-col = ['gender', 'description', 'fav_number','link_color',
+col = ['gender', 'description', 'fav_number', 'link_color',
        'retweet_count', 'sidebar_color', 'text', 'tweet_count',
        ]
 
@@ -140,33 +142,31 @@ plt.show()
 
 # The imbalanceness can be handled either using the model attribute class_weight or applying sampling techniques.
 
-"""NLP Processing"""
+# NLP Processing
 
-import nltk
-from nltk.corpus import stopwords
 nltk.download('stopwords')
 nltk.download('punkt')
 
 df_status = df_preprocessed.copy()
 df_status = pd.concat([df_status['gender'], df_status['description']], axis=1)
 
-df_status
+print(df_status)
 
 # make all lowercase since "Run" is not the same as "run" for machine computation
-import re
 
 description = []
 
 for x in df_status['description']:
-    desc = re.sub("[^a-zA-Z]"," ",x)
+    desc = re.sub("[^a-zA-Z]", " ", x)
     desc = desc.lower()
     description.append(desc)
 
 df_status['description'] = description
-df_status
+print(df_status)
 
-# remove stopwords in sentence ==> i,a,the,an,and,.,me,........
+
 def remove_stopwords(text):
+    """remove stopwords in sentence ==> i,a,the,an,and,.,me,........"""
     words = nltk.word_tokenize(text)
     stop_words = set(stopwords.words('english'))
     filtered_words = [word for word in words if word.lower() not in stop_words]
@@ -174,33 +174,26 @@ def remove_stopwords(text):
 
 
 df_status['tokenized'] = df_status['description'].apply(remove_stopwords)
-df_status
+print(df_status)
 
 # count word in sentence by changing tokenized to vectorizor (for machine compute)
 # CountVectorizer input must be string with one long list
 
-from sklearn.feature_extraction.text import CountVectorizer
-
-max_features = 1500
+MAX_FEATURES = 1500
 corpus = [' '.join(words) for words in df_status['tokenized']]
 
-vectorizer = CountVectorizer(max_features = max_features, stop_words = "english")
+vectorizer = CountVectorizer(max_features=MAX_FEATURES, stop_words="english")
 X = vectorizer.fit_transform(corpus).toarray()
 
 # let's see X in dataframe
 df_ = pd.DataFrame(X, columns=vectorizer.get_feature_names_out(), index=df_status.index)
 
-df_
+print(df_)
 
-y = df_preprocessed['gender'].values # Create an array
-y # gender ==> our target in the model
+y = df_preprocessed['gender'].values  # Create an array
+print(y)  # gender ==> our target in the model
 
-"""# Example Usage"""
-
-import numpy as np
-import xgboost as xgb
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report
+# Example Usage
 
 # Split the dataset into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -221,8 +214,8 @@ params = {
 }
 
 # Train the XGBoost model
-num_round = 100  # Number of boosting rounds
-bst = xgb.train(params, dtrain, num_round)
+NUM_ROUND = 100  # Number of boosting rounds
+bst = xgb.train(params, dtrain, NUM_ROUND)
 
 # Make predictions on the test set
 y_pred = bst.predict(dtest)
