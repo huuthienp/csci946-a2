@@ -3,27 +3,30 @@ def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", package])
 try:
     import sys
-    import os
     import subprocess
-    import nltk
+
     import re
+    import string
+    import nltk
+    from nltk.corpus import stopwords
+    from nltk.tokenize import word_tokenize
+    from nltk.stem import WordNetLemmatizer
+
     import pandas as pd
     import numpy as np
     import seaborn as sns
     import matplotlib.pyplot as plt
-    import hdbscan
-    import umap
     import sklearn
-    from sklearn.preprocessing import MinMaxScaler, StandardScaler, OneHotEncoder
     from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.cluster import KMeans, DBSCAN, SpectralClustering
-    from sklearn.decomposition import PCA, IncrementalPCA
-    from sklearn.metrics import silhouette_score, davies_bouldin_score
-    #from sklearn.model_selection import train_test_split
-    from nltk.corpus import stopwords
-    #from sklearn.decomposition import TruncatedSVD
     import warnings
     warnings.filterwarnings('ignore')
+
+    # from sklearn.preprocessing import MinMaxScaler, StandardScaler, OneHotEncoder
+    # from sklearn.model_selection import train_test_split
+    # from sklearn.decomposition import PCA, IncrementalPCA, TruncatedSVD
+    # from sklearn.cluster import KMeans, DBSCAN, SpectralClustering
+    # from sklearn.metrics import silhouette_score, davies_bouldin_score
+
 except ImportError:
     print("Some packages are required to be installed")
     print("Installing expected packages")
@@ -344,12 +347,6 @@ nltk.download('stopwords')
 nltk.download('punkt')
 nltk.download('punkt_tab')
 nltk.download('wordnet')
-
-import string
-import re
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from nltk.stem import WordNetLemmatizer
 
 df_preprocessed['description'].fillna('', inplace=True)
 df_preprocessed['text'].fillna('', inplace=True)
