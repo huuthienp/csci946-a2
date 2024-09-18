@@ -15,7 +15,7 @@ REQS = [
     ('pandas', 'pandas==2.2.2'),
     ('seaborn', 'seaborn==0.13.2'),
     ('sklearn', 'scikit-learn==1.5.2'),
-    ('statsmodels', 'statsmodels==0.14.3')
+    ('statsmodels', 'statsmodels==0.14.3'),
     ('umap', 'umap==0.1.1')
 ]
 
@@ -82,20 +82,28 @@ df = pd.read_csv('twitter_user_data.csv', encoding='ISO-8859-1')
 # print(df.head())
 
 all_features = df.columns
-#Finding features that have a lot of missing data
+
+
+# Finding features that have a lot of missing data
 def find_columns_with_missing(data, columns):
+    """Finding features that have a lot of missing data"""
+    print()
+    print('Finding columns with missing data...')
     missing = []
     i = 0
     for col in columns:
         missing.append(data[col].isnull().sum())
-        print(f'the {col} has {missing[i]} data missing')
-        print(f'the proportion of missing data to the total is {missing[i]/len(data)}')
-        if missing[i]/len(data) >= 0.9:
-            print(f'The feature to be dropped is {col}')
-            data = data.drop(columns=col)
-            data_cleaned = data
+        if missing[i] > 0:
+            print()
+            print(f'Column {col} is missing {missing[i]} values.')
+            print(f'Proportion of missing data is {missing[i]/len(data)}.')
+            if missing[i]/len(data) >= 0.9:
+                print(f'Dropping column {col}...')
+                data = data.drop(columns=col)
+                data_cleaned = data
         i += 1
     return missing, data_cleaned
+
 
 missing_col, df_cleaned = find_columns_with_missing(df, all_features)
 missing_col
@@ -120,31 +128,31 @@ df_cleaned = df_cleaned.drop(columns=['profile_yn'])
 current_num_features = df.select_dtypes(include=[np.number])
 
 # Plot distribution of each numerical feature with gender as hue using seaborn
-for feature in current_num_features:
-    plt.figure(figsize=(8, 6))
-    sns.histplot(df_cleaned, x=feature, hue='gender', bins=30, kde=True)
-    plt.title(f'Distribution of {feature} by Gender')
+# for feature in current_num_features:
+    # plt.figure(figsize=(8, 6))
+    # sns.histplot(df_cleaned, x=feature, hue='gender', bins=30, kde=True)
+    # plt.title(f'Distribution of {feature} by Gender')
     # plt.show()
 
 # Distribution of gender
-plt.figure(figsize=(8, 6))
-sns.countplot(x='gender', data=df_cleaned)
-plt.title('Distribution of Gender')
-plt.xlabel('Gender')
-plt.ylabel('count')
+# plt.figure(figsize=(8, 6))
+# sns.countplot(x='gender', data=df_cleaned)
+# plt.title('Distribution of Gender')
+# plt.xlabel('Gender')
+# plt.ylabel('count')
 # plt.show()
 
 # Plot distribution of 'tweet_count' and 'retweet_count'
-for column in ['tweet_count', 'retweet_count']:
-    plt.figure(figsize=(8, 6))
-    sns.histplot(data=df_cleaned, x=column, kde=True, bins=30)
-    plt.title(f'Distribution of {column.replace("_", " ").capitalize()}')
+# for column in ['tweet_count', 'retweet_count']:
+    # plt.figure(figsize=(8, 6))
+    # sns.histplot(data=df_cleaned, x=column, kde=True, bins=30)
+    # plt.title(f'Distribution of {column.replace("_", " ").capitalize()}')
     # plt.show()
 
 # Correlation analysis for numerical features
-plt.figure(figsize=(10, 8))
-sns.heatmap(df_cleaned[['tweet_count', 'retweet_count', 'fav_number']].corr(), annot=True, cmap='coolwarm', vmin=-1, vmax=1)
-plt.title('Correlation Matrix of Numerical Features')
+# plt.figure(figsize=(10, 8))
+# sns.heatmap(df_cleaned[['tweet_count', 'retweet_count', 'fav_number']].corr(), annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+# plt.title('Correlation Matrix of Numerical Features')
 # plt.show()
 
 # Extracting date from 'created' and 'tweet_created' for time-based analysis
@@ -163,27 +171,27 @@ df_cleaned['retweets_per_day'] = df_cleaned['retweet_count'] / df_cleaned['accou
 df_cleaned['favorites_per_day'] = df_cleaned['fav_number'] / df_cleaned['account_age']
 
 # Plotting the distribution of profile creation over the years
-plt.figure(figsize=(8, 6))
-sns.histplot(df_cleaned['profile_created_year'], kde=False, bins=15)
-plt.title('Distribution of Profile Creation Years')
-plt.xlabel('Profile Created Year')
-plt.ylabel('count')
+# plt.figure(figsize=(8, 6))
+# sns.histplot(df_cleaned['profile_created_year'], kde=False, bins=15)
+# plt.title('Distribution of Profile Creation Years')
+# plt.xlabel('Profile Created Year')
+# plt.ylabel('count')
 # plt.show()
 
 # Plotting the histogram of tweets per day
-plt.figure(figsize=(10, 6))
-sns.histplot(df_cleaned['tweets_per_day'], bins=50, kde=True)
-plt.title('Distribution of Tweets Per Day')
-plt.xlabel('Tweets Per Day')
-plt.ylabel('Frequency')
+# plt.figure(figsize=(10, 6))
+# sns.histplot(df_cleaned['tweets_per_day'], bins=50, kde=True)
+# plt.title('Distribution of Tweets Per Day')
+# plt.xlabel('Tweets Per Day')
+# plt.ylabel('Frequency')
 # plt.show()
 
 #show the relationship between account age and tweets per day
-plt.figure(figsize=(10, 6))
-sns.scatterplot(x='account_age', y='tweets_per_day', data=df_cleaned)
-plt.title('Account Age vs. Tweets Per Day')
-plt.xlabel('Account Age (Days)')
-plt.ylabel('Tweets Per Day')
+# plt.figure(figsize=(10, 6))
+# sns.scatterplot(x='account_age', y='tweets_per_day', data=df_cleaned)
+# plt.title('Account Age vs. Tweets Per Day')
+# plt.xlabel('Account Age (Days)')
+# plt.ylabel('Tweets Per Day')
 # plt.show()
 
 # Exploring 'link_color' and 'sidebar_color' features
@@ -217,64 +225,60 @@ top_link_colors = df_cleaned['link_color'].value_counts().iloc[:15].index.tolist
 #print(top_sidebar_colors)
 
 # Extract top 10 most common sidebar colors 
-sns.set(rc={'axes.facecolor':'lightgrey', 'figure.facecolor':'white'})
-plt.figure(figsize=(8, 6))
-sns.countplot(y='sidebar_color', data=df_cleaned, order=df_cleaned['sidebar_color'].value_counts().iloc[:15].index, palette=top_sidebar_colors)
-plt.title('Top 15 Most Common Profile sidebar_color')
-plt.ylabel('Sidebar Color')
-plt.xlabel('count')
-plt.grid()
+# sns.set(rc={'axes.facecolor':'lightgrey', 'figure.facecolor':'white'})
+# plt.figure(figsize=(8, 6))
+# sns.countplot(y='sidebar_color', data=df_cleaned, order=df_cleaned['sidebar_color'].value_counts().iloc[:15].index, palette=top_sidebar_colors)
+# plt.title('Top 15 Most Common Profile sidebar_color')
+# plt.ylabel('Sidebar Color')
+# plt.xlabel('count')
+# plt.grid()
 # plt.show()
 
 # Extract top 10 most common link colors 
-sns.set(rc={'axes.facecolor':'lightgrey', 'figure.facecolor':'white'})
-plt.figure(figsize=(8, 6))
-sns.countplot(y='link_color', data=df_cleaned, order=df_cleaned['link_color'].value_counts().iloc[:15].index, palette=top_link_colors)
-plt.title('Top 15 Most Common Profile link_color')
-plt.ylabel('Link Color')
-plt.xlabel('count')
-plt.grid()
+# sns.set(rc={'axes.facecolor':'lightgrey', 'figure.facecolor':'white'})
+# plt.figure(figsize=(8, 6))
+# sns.countplot(y='link_color', data=df_cleaned, order=df_cleaned['link_color'].value_counts().iloc[:15].index, palette=top_link_colors)
+# plt.title('Top 15 Most Common Profile link_color')
+# plt.ylabel('Link Color')
+# plt.xlabel('count')
+# plt.grid()
 # plt.show()
 
 # count plot for sidebar_color vs. gender
-plt.figure(figsize=(10, 6))
-sns.set(rc={'axes.facecolor':'white', 'figure.facecolor':'white'})
-sns.countplot(x='sidebar_color', hue='gender', data=df_cleaned, 
-              order=df_cleaned['sidebar_color'].value_counts().iloc[:15].index)
-plt.title('Top 15 Most Common Sidebar Colors by Gender')
-plt.xlabel('Sidebar Color')
-plt.ylabel('count')
-plt.xticks(rotation=45)
+# plt.figure(figsize=(10, 6))
+# sns.set(rc={'axes.facecolor':'white', 'figure.facecolor':'white'})
+# sns.countplot(x='sidebar_color', hue='gender', data=df_cleaned, order=df_cleaned['sidebar_color'].value_counts().iloc[:15].index)
+# plt.title('Top 15 Most Common Sidebar Colors by Gender')
+# plt.xlabel('Sidebar Color')
+# plt.ylabel('count')
+# plt.xticks(rotation=45)
 # plt.show()
 
 # count plot for link_color vs. gender
-plt.figure(figsize=(10, 6))
-sns.countplot(x='link_color', hue='gender', data=df_cleaned, 
-              order=df_cleaned['link_color'].value_counts().iloc[:15].index)
-plt.title('Top 15 Most Common link Colors by Gender')
-plt.xlabel('Link Color')
-plt.ylabel('count')
-plt.xticks(rotation=45)
+# plt.figure(figsize=(10, 6))
+# sns.countplot(x='link_color', hue='gender', data=df_cleaned, order=df_cleaned['link_color'].value_counts().iloc[:15].index)
+# plt.title('Top 15 Most Common link Colors by Gender')
+# plt.xlabel('Link Color')
+# plt.ylabel('count')
+# plt.xticks(rotation=45)
 # plt.show()
 
 # Scatter plot for link_color vs. tweet_count with gender as hue
-plt.figure(figsize=(10, 6))
-sns.scatterplot(x='link_color', y='tweet_count', hue='gender', data=df_cleaned[df_cleaned['link_color'].isin(top_link_colors)], 
-                palette='Set2', s=100, alpha=0.7)
-plt.title('Link Colors vs. Tweet count with Gender')
-plt.xlabel('Link Color')
-plt.ylabel('Tweet count')
-plt.xticks(rotation=45)
+# plt.figure(figsize=(10, 6))
+# sns.scatterplot(x='link_color', y='tweet_count', hue='gender', data=df_cleaned[df_cleaned['link_color'].isin(top_link_colors)], palette='Set2', s=100, alpha=0.7)
+# plt.title('Link Colors vs. Tweet count with Gender')
+# plt.xlabel('Link Color')
+# plt.ylabel('Tweet count')
+# plt.xticks(rotation=45)
 # plt.show()
 
 # Scatter plot for sidebar_color vs. tweet_count with gender as hue
-plt.figure(figsize=(10, 6))
-sns.scatterplot(x='sidebar_color', y='tweet_count', hue='gender', data=df_cleaned[df_cleaned['sidebar_color'].isin(top_sidebar_colors)], 
-                palette='Set2', s=100, alpha=0.7)
-plt.title('Sidebar Colors vs. Tweet count with Gender')
-plt.xlabel('Sidebar Color')
-plt.ylabel('Tweet count')
-plt.xticks(rotation=45)
+# plt.figure(figsize=(10, 6))
+# sns.scatterplot(x='sidebar_color', y='tweet_count', hue='gender', data=df_cleaned[df_cleaned['sidebar_color'].isin(top_sidebar_colors)], palette='Set2', s=100, alpha=0.7)
+# plt.title('Sidebar Colors vs. Tweet count with Gender')
+# plt.xlabel('Sidebar Color')
+# plt.ylabel('Tweet count')
+# plt.xticks(rotation=45)
 # plt.show()
 
 # Select columns to be used
@@ -287,7 +291,7 @@ df_preprocessed = df_preprocessed[df_preprocessed['gender'] != 'unknown']
 
 # Plot correlation matrix
 corr_matrix = df_preprocessed.select_dtypes(include=[np.number]).corr()
-sns.heatmap(corr_matrix, annot=True)
+# sns.heatmap(corr_matrix, annot=True)
 # plt.show()
 
 # Drop one feature from highly correlated pairs (correlation > 0.9)
@@ -323,11 +327,11 @@ df_preprocessed['gender'] = df_preprocessed['gender'].replace({'male': 0, 'femal
 # print(df_preprocessed.info())
 
 # Distribution of gender
-plt.figure(figsize=(8, 6))
-sns.countplot(x='gender', data=df_preprocessed)
-plt.title('Distribution of Gender')
-plt.xlabel('Gender')
-plt.ylabel('count')
+# plt.figure(figsize=(8, 6))
+# sns.countplot(x='gender', data=df_preprocessed)
+# plt.title('Distribution of Gender')
+# plt.xlabel('Gender')
+# plt.ylabel('count')
 # plt.show()
 
 df_gender = df_preprocessed[['gender', 'gender:confidence']].copy()
@@ -368,16 +372,10 @@ numerical_features = df_preprocessed.select_dtypes(include=[np.number])
 # print(df_preprocessed.info())
 
 # NLP Processing
-nltk.download('stopwords')
-nltk.download('punkt')
-nltk.download('punkt_tab')
-nltk.download('wordnet')
-
-import string
-import re
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from nltk.stem import WordNetLemmatizer
+# nltk.download('stopwords')
+# nltk.download('punkt')
+# nltk.download('punkt_tab')
+# nltk.download('wordnet')
 
 df_preprocessed['description'].fillna('', inplace=True)
 df_preprocessed['text'].fillna('', inplace=True)
