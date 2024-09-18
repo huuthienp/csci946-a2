@@ -305,6 +305,7 @@ class ClusteringDataRetriever:
         return self.get_cluster_data(-1)
 
 
+# Main starts here
 # Load the dataset
 df = pd.read_csv('twitter_user_data.csv', encoding='ISO-8859-1')
 
@@ -335,7 +336,8 @@ print(df_cleaned.info())
 print('The first few rows of the cleaned dataset')
 print(df_cleaned.head())
 
-"Exploratory Data Analysis (EDA)"
+print()
+print('EXPLORATORY DATA ANALYSIS (EDA)')
 
 current_num_features = df.select_dtypes(include=[np.number])
 
@@ -375,7 +377,7 @@ df_cleaned['tweet_created_year'] = pd.to_datetime(df_cleaned['tweet_created']).d
 df_cleaned['created'] = pd.to_datetime(df_cleaned['created'], errors='coerce')
 df_cleaned['tweet_created'] = pd.to_datetime(df_cleaned['tweet_created'], errors='coerce')
 
-#assuming the data was up-to-date
+# assuming the data was up-to-date
 df_cleaned['account_age'] = (pd.Timestamp.now() - df_cleaned['created']).dt.days
 
 df_cleaned['tweets_per_day'] = df_cleaned['tweet_count'] / df_cleaned['account_age']
@@ -398,7 +400,7 @@ plt.xlabel('Tweets Per Day')
 plt.ylabel('Frequency')
 plt.show()
 
-#show the relationship between account age and tweets per day
+# show the relationship between account age and tweets per day
 plt.figure(figsize=(10, 6))
 sns.scatterplot(x='account_age', y='tweets_per_day', data=df_cleaned)
 plt.title('Account Age vs. Tweets Per Day')
@@ -408,14 +410,14 @@ plt.show()
 
 # Exploring 'link_color' and 'sidebar_color' features
 
-#Check number of NaN value in  'link_color' and 'sidebar_color' features
+# Check number of NaN value in  'link_color' and 'sidebar_color' features
 link_color_nan_count = df_cleaned['link_color'].isnull().sum()
 sidebar_color_nan_count = df_cleaned['sidebar_color'].isnull().sum()
 
 print(f"Number of NaN values in 'link_color': {link_color_nan_count}")
 print(f"Number of NaN values in 'sidebar_color': {sidebar_color_nan_count}")
 
-#Check how many available colors in 'link_color' and 'sidebar_color' features
+# Check how many available colors in 'link_color' and 'sidebar_color' features
 link_color_count = len(df_cleaned['link_color'].unique())
 sidebar_color_count = len(df_cleaned['sidebar_color'].unique())
 print(f'the number of link color is {link_color_count}')
@@ -431,10 +433,10 @@ df_cleaned = df_cleaned.dropna(subset=['sidebar_color'])
 print(f"Number of NaN values in 'link_color': {df_cleaned['link_color'].isnull().sum()}")
 print(f"Number of NaN values in 'sidebar_color': {df_cleaned['sidebar_color'].isnull().sum()}")
 
-#top 15 colors
+# top 15 colors
 top_sidebar_colors = df_cleaned['sidebar_color'].value_counts().iloc[:15].index.tolist()
 top_link_colors = df_cleaned['link_color'].value_counts().iloc[:15].index.tolist()
-#print(top_sidebar_colors)
+# print(top_sidebar_colors)
 
 # Extract top 10 most common sidebar colors 
 sns.set(rc={'axes.facecolor':'lightgrey', 'figure.facecolor':'white'})
@@ -520,20 +522,20 @@ df_preprocessed['user_timezone'].fillna('Unknown', inplace=True)
 df_preprocessed['tweet_location'].fillna('Unknown', inplace=True)
 categorical_features = ['user_timezone', 'tweet_location']
 
-#categorise types of features
+# categorise types of features
 
-#numerical features
+# numerical features
 df_num = df_preprocessed[['retweets_per_day', 'favorites_per_day', 'tweets_per_day', 'profile_created_year', 'tweet_created_year']].copy()
 
-#categorical features with frequency encoding
+# categorical features with frequency encoding
 freq_encoding_location = df_preprocessed['tweet_location'].value_counts(normalize=True)
 df_preprocessed['tweet_location_encoded'] = df_preprocessed['tweet_location'].map(freq_encoding_location)
 
 freq_encoding_timezone = df_preprocessed['user_timezone'].value_counts(normalize=True)
 df_preprocessed['user_timezone_encoded'] = df_preprocessed['user_timezone'].map(freq_encoding_timezone)
 
-#gender features
-#encode the 'gender' column to numeric values
+# gender features
+# encode the 'gender' column to numeric values
 df_preprocessed['gender'] = df_preprocessed['gender'].replace({'male': 0, 'female': 1, 'brand': 2})
 
 # Check for unique values in the 'gender' column after replacement
@@ -561,15 +563,15 @@ df_preprocessed['sidebar_color_rgb'] = df_preprocessed['sidebar_color'].apply(la
 rgb_df = pd.DataFrame(df_preprocessed['link_color_rgb'].to_list(), columns=['link_R', 'link_G', 'link_B'])
 rgb_df = pd.concat([rgb_df, pd.DataFrame(df_preprocessed['sidebar_color_rgb'].to_list(), columns=['sidebar_R', 'sidebar_G', 'sidebar_B'])], axis=1)
 
-#Drop the original color features
+# Drop the original color features
 df_preprocessed = df_preprocessed.drop(columns=['link_color', 'sidebar_color', 'link_color_rgb', 'sidebar_color_rgb'])
 
-#Check if all required features are there
+# Check if all required features are there
 print(f'All features that will be used are {df_preprocessed.columns.tolist()}')
 
 # Define the numerical features to scale (filtering for int64 and float64 columns)
 numerical_features = df_preprocessed.select_dtypes(include=[np.number])
-#print(f'All current numerical features are {numerical_features.columns.tolist()}')
+# print(f'All current numerical features are {numerical_features.columns.tolist()}')
 
 print('After all, here is the information of the dataset')
 print(df_preprocessed.info())
@@ -588,9 +590,9 @@ from nltk.stem import WordNetLemmatizer
 
 df_preprocessed['description'].fillna('', inplace=True)
 df_preprocessed['text'].fillna('', inplace=True)
-#df_preprocessed['name'].fillna('', inplace=True)
+# df_preprocessed['name'].fillna('', inplace=True)
 
-#Check the text features if they still contain NaN
+# Check the text features if they still contain NaN
 print(df_preprocessed.select_dtypes(include=[object]))
 
 
@@ -601,15 +603,15 @@ lemmatizer = WordNetLemmatizer()
 # Apply preprocessing to the 'description', 'text', and 'name' columns
 df_preprocessed['cleaned_description'] = df_preprocessed['description'].apply(lambda x: preprocess_text(str(x)))
 df_preprocessed['cleaned_text'] = df_preprocessed['text'].apply(lambda x: preprocess_text(str(x)))
-#df_preprocessed['cleaned_name'] = df_preprocessed['name'].apply(lambda x: preprocess_text(str(x)))
+# df_preprocessed['cleaned_name'] = df_preprocessed['name'].apply(lambda x: preprocess_text(str(x)))
 
 # Check the preprocessed data with preprocessed text features
 print(df_preprocessed[['description', 'cleaned_description', 'text', 'cleaned_text']].head())
 
-#Drop the original text features
+# Drop the original text features
 df_preprocessed = df_preprocessed.drop(columns=['description','text'])
 
-#Check the preprocessed dataset in the present
+# Check the preprocessed dataset in the present
 print('The current information of pre-processed dataset before text preprocessing')
 print(df_preprocessed.info())
 
@@ -621,17 +623,17 @@ tfidf_vectorizer = TfidfVectorizer(max_features=1500, stop_words='english')
 
 tfidf_description = tfidf_vectorizer.fit_transform(df_preprocessed['cleaned_description']).toarray()
 tfidf_text = tfidf_vectorizer.fit_transform(df_preprocessed['cleaned_text']).toarray()
-#tfidf_name = tfidf_vectorizer.fit_transform(df_preprocessed['cleaned_name']).toarray()
+# tfidf_name = tfidf_vectorizer.fit_transform(df_preprocessed['cleaned_name']).toarray()
 
 # Convert TF-IDF into DataFrames and add to df_preprocessed
 tfidf_desc_df = pd.DataFrame(tfidf_description, columns=[f'desc_{i}' for i in range(tfidf_description.shape[1])])
 tfidf_text_df = pd.DataFrame(tfidf_text, columns=[f'text_{i}' for i in range(tfidf_text.shape[1])])
-#tfidf_name_df = pd.DataFrame(tfidf_name, columns=[f'name_{i}' for i in range(tfidf_name.shape[1])])
+# tfidf_name_df = pd.DataFrame(tfidf_name, columns=[f'name_{i}' for i in range(tfidf_name.shape[1])])
 
 # Merge with main dataframe
 df_preprocessed = pd.concat([df_preprocessed.reset_index(drop=True), tfidf_desc_df, tfidf_text_df], axis=1)
 
-#Drop the cleaned text features
+# Drop the cleaned text features
 df_preprocessed = df_preprocessed.drop(columns=['cleaned_description', 'cleaned_text'])
 
 df_preprocessed = pd.concat([df_preprocessed, rgb_df], axis=1)
@@ -640,38 +642,38 @@ df_preprocessed = pd.concat([df_preprocessed, rgb_df], axis=1)
 
 df_cate = df_preprocessed[['tweet_location_encoded', 'user_timezone_encoded']].copy()
 
-"""
-Clustering models
-"""
+print()
+print('CLUSTERING MODELS')
 
-"""Experiment 1: Using all selected features"""
+print()
+print('Experiment 1: Using all selected features')
 
 sil_ex1 = []
 cal_ex1 = []
-#Drop the gender and categorical features before normalise
+# Drop the gender and categorical features before normalise
 
 df_cat = df_cate.copy()
-#Drop gender feature and categorical features
+# Drop gender feature and categorical features
 df_preprocessed = df_preprocessed.drop(columns=df_cat.columns)
 df_finalised = df_preprocessed.drop(columns=['gender', 'gender:confidence'])
 
-#Normalise every existing feature
+# Normalise every existing feature
 scaler = StandardScaler()
 df_finalised = pd.DataFrame(scaler.fit_transform(df_finalised), columns=df_finalised.columns)
 
 df_finalised = pd.concat([df_finalised, df_cat, df_gender], axis=1)
-#find the rows that contained NaN values and drop them
+# find the rows that contained NaN values and drop them
 df_finalised = df_finalised.dropna()
 
 data_exp1 = df_finalised
 df_ex1 = df_finalised.drop(columns=['gender', 'gender:confidence'])
 
 
-#Check the preprocessed dataset in the present
+# Check the preprocessed dataset in the present
 print('The current information of pre-processed dataset after all pre-processing')
 print(df_ex1.info())
 
-#Apply UMAP for dimensionality reduction
+# Apply UMAP for dimensionality reduction
 umap_model = umap.UMAP()
 umap_vis = umap.UMAP(n_neighbors=30,min_dist=0.1, n_components=3, random_state=42)
 umap_embedding = umap_model.fit_transform(df_ex1)
@@ -723,12 +725,13 @@ for label in np.unique(db_labels):
 print('the data points classified as noise')
 db_retriever.get_noise_data()
 
-"""Experiment 2: Using only numerical and categorical features"""
+print()
+print('Experiment 2: Using only numerical and categorical features')
 
 sil_ex2 = []
 cal_ex2 = []
 
-#Normalise every existing feature
+# Normalise every existing feature
 scaler = StandardScaler()
 chunk_size = 100
 for i in range(0, df_num.shape[0], chunk_size):
@@ -741,19 +744,19 @@ print(df_no_text.info())
 df_no_text = df_no_text.dropna()
 df_no_text_wg = df_no_text.copy()
 
-#Drop gender feature before clustering
+# Drop gender feature before clustering
 data_exp2 = df_no_text.drop(columns=['gender', 'gender:confidence'])
 
-#Check the number of data after drop NaN values
+# Check the number of data after drop NaN values
 print("Data with only numerical and categorical features after dropping NaN values:")
 print(data_exp2.head())
 print(data_exp2.info())
 
-#Apply UMAP for dimensionality reduction
+# Apply UMAP for dimensionality reduction
 umap_model = umap.UMAP(n_neighbors=30,min_dist=0.1, n_components=3, random_state=42)
 umap_embedding = umap_model.fit_transform(data_exp2)
 print(umap_embedding.shape) 
-#umap_embedding = umap_embedding.astype(np.float32)
+# umap_embedding = umap_embedding.astype(np.float32)
 
 # K-Means Clustering 
 kmeans_clustering = KMeansClustering(data_exp2)
@@ -800,14 +803,14 @@ for label in np.unique(db_labels):
 print('the data points classified as noise')
 db_retriever.get_noise_data()
 
-
-"""Experiment 3: using only text features"""
+print()
+print('Experiment 3: Using only text features')
 
 sil_ex3 = []
 cal_ex3 = []
 # Merge with main dataframe
 df_with_text = pd.concat([tfidf_desc_df, tfidf_text_df], axis=1)
-#Normalise every existing feature
+# Normalise every existing feature
 scaler = StandardScaler()
 chunk_size = 100
 for i in range(0, df_with_text.shape[0], chunk_size):
@@ -818,14 +821,14 @@ print(df_with_text.head())
 print(df_with_text.info())
 
 df_with_text_wg = pd.concat([df_with_text, df_gender], axis=1)
-#Drop NaN values before clustering
+# Drop NaN values before clustering
 df_with_text_wg = df_with_text_wg.dropna()
 data_exp3 = df_with_text_wg.drop(columns=['gender', 'gender:confidence'])
 
-#Drop the gender features before clustering
+# Drop the gender features before clustering
 
 
-#Check the number of data after drop NaN values
+# Check the number of data after drop NaN values
 print("Data with only text features after dropping NaN values:")
 print(df_with_text.head())
 print(df_with_text.info())
@@ -878,10 +881,10 @@ for label in np.unique(db_labels):
 print('the data points classified as noise')
 db_retriever.get_noise_data()
 
+print()
+print('VISUALIZE THE METRIC EVALUATION')
 
-"""Visualize the metric evaluation"""
-
-#Metric functions
+# Metric functions
 model_names = ['KMeans', 'DBSCAN']
 
 sil_scores = [sil_ex1, sil_ex2, sil_ex3]
