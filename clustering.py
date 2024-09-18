@@ -300,7 +300,7 @@ class DBSCANClustering:
         ax.set_xlabel('UMAP Dimension 1')
         ax.set_ylabel('UMAP Dimension 2')
         ax.set_zlabel('UMAP Dimension 3')
-        ax.set_title(f'DBSCAN 3D Clusters with Outliers {feature}')
+        ax.set_title(f'DBSCAN 3D Clusters with Outliers on {feature}')
         # Add a legend and color bar for clusters
         plt.legend()
         plt.colorbar(scatter, ax=ax)
