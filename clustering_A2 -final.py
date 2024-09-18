@@ -1,39 +1,76 @@
+import re
+import string
+import subprocess
+import sys
+import warnings
 
-# Import necessary libraries
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", package])
+warnings.filterwarnings('ignore')
+
+REQS = [
+    ('pip', 'pip==24.2'),
+    ('matplotlib', 'matplotlib==3.9.2'),
+    ('nltk', 'nltk==3.9.1'),
+    ('numpy', 'numpy==2.1.1'),
+    ('optuna', 'optuna==4.0.0'),
+    ('pandas', 'pandas==2.2.2'),
+    ('seaborn', 'seaborn==0.13.2'),
+    ('sklearn', 'scikit-learn==1.5.2'),
+    ('statsmodels', 'statsmodels==0.14.3')
+    ('umap', 'umap==0.1.1')
+]
+
 try:
-    import sys
-    import subprocess
-    import nltk
-    import re
-    import pandas as pd
-    import numpy as np
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-    import hdbscan
-    import umap
-    import optuna
-    from mpl_toolkits.mplot3d import Axes3D
-    from sklearn.preprocessing import MinMaxScaler, StandardScaler, OneHotEncoder
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.cluster import KMeans, DBSCAN
-    from sklearn.decomposition import PCA
-    from sklearn.metrics import silhouette_score, calinski_harabasz_score
-    from nltk.corpus import stopwords
-    import warnings
-    warnings.filterwarnings('ignore')
-except ImportError:
-    print("Some packages are required to be installed")
-    print("Installing expected packages")
-    install('pip')
-    install('nltk')
-    # install('matplotlib')
-    install('hdbscan')
-    install('umap-learn')
-    install('optuna')
-    install('scikit-learn')
-    install('plotly')
+    subprocess.check_call([sys.executable, '-m', 'ensurepip'])
+except Exception as e:
+    print(e, file=sys.stderr)
+
+
+def ensure_installed(module_info):
+    _, install_str = module_info
+    try:
+        subprocess.check_call([sys.executable, '-m',
+                               'pip', 'install', '--quiet',
+                               install_str])
+        print(f'Installed "{install_str}".')
+    except Exception as e:
+        print(e, file=sys.stderr)
+
+
+for m in REQS:
+    ensure_installed(m)
+
+# Standard libraries
+import numpy as np
+import pandas as pd
+
+# Visualization
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import seaborn as sns
+
+# Machine learning and data processing
+from sklearn.preprocessing import StandardScaler
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans, DBSCAN
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, mean_squared_error
+
+# Statistical modeling
+import statsmodels.api as sm
+from statsmodels.tools.tools import add_constant
+
+# Natural Language Processing
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+
+# Dimensionality reduction
+import umap
+
+# Hyperparameter optimization
+import optuna
 
 
 def find_columns_with_missing(data, columns):
@@ -111,7 +148,6 @@ def visualize_ch_index_across_experiments(model_names, ch_scores):
 
     for i, model_name in enumerate(model_names):
         ch_score = [exp_scores[i] for exp_scores in ch_scores]
-        print
         plt.bar(index + i * bar_width, ch_score, bar_width, label=model_name)
 
     plt.xlabel('Experiments')
@@ -264,7 +300,7 @@ class DBSCANClustering:
         ax.set_xlabel('UMAP Dimension 1')
         ax.set_ylabel('UMAP Dimension 2')
         ax.set_zlabel('UMAP Dimension 3')
-        ax.set_title(f'DBSCAN 3D Clusters with Outliers on {feature}')
+        ax.set_title(f'DBSCAN 3D Clusters with Outliers {feature}')
         # Add a legend and color bar for clusters
         plt.legend()
         plt.colorbar(scatter, ax=ax)
@@ -593,12 +629,6 @@ nltk.download('punkt')
 nltk.download('punkt_tab')
 nltk.download('wordnet')
 
-import string
-import re
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from nltk.stem import WordNetLemmatizer
-
 df_preprocessed['description'].fillna('', inplace=True)
 df_preprocessed['text'].fillna('', inplace=True)
 # df_preprocessed['name'].fillna('', inplace=True)
@@ -913,4 +943,4 @@ sil_scores = [sil_ex1, sil_ex2, sil_ex3]
 cal_scores = [cal_ex1, cal_ex2, cal_ex3]
 
 plot_silhouette_bar_across_experiments(model_names, sil_scores)
-visualize_ch_index_across_experiments(model_names,cal_scores)
+visualize_ch_index_across_experiments(model_names, cal_scores)

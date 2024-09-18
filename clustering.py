@@ -204,7 +204,7 @@ class KMeansClustering:
         ax.set_xlabel('UMAP Dimension 1')
         ax.set_ylabel('UMAP Dimension 2')
         ax.set_zlabel('UMAP Dimension 3')
-        plt.title(f'3D UMAP of K-Means Clusters on All Feature Types {feature}')
+        plt.title(f'3D UMAP of K-Means Clusters on {feature}')
         # Add a color bar for better visual distinction of clusters
         plt.colorbar(scatter)
         # Show the plot
@@ -236,6 +236,7 @@ class KMeansClustering:
 
     def silhoutte(self):
         score = silhouette_score(self.data, self.kmeans_model.labels_)
+        print(f'The Silhouette score is {score}')
         return score
 
     def calinski(self):
@@ -243,6 +244,7 @@ class KMeansClustering:
             score = calinski_harabasz_score(self.data, self.kmeans_model.labels_)
         else:
             score = np.nan  # If only one cluster (or all noise), set to NaN
+        print(f'The Callinski index is {score}')
         return score
 
 
@@ -309,6 +311,7 @@ class DBSCANClustering:
 
     def silhoutte(self):
         score = silhouette_score(self.data, self.dbscan_model.labels_)
+        print(f'The Silhouette score is {score}')
         return score
 
     def calinski(self):
@@ -316,6 +319,7 @@ class DBSCANClustering:
             score = calinski_harabasz_score(self.data, self.dbscan_model.labels_)
         else:
             score = np.nan  # If only one cluster (or all noise), set to NaN
+        print(f'The Callinski index is {score}')
         return score
 
 
@@ -763,7 +767,7 @@ for label in np.unique(db_labels):
         print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
         print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
 print('Data points classified as noise')
-db_retriever.get_noise_data()
+print(db_retriever.get_noise_data())
 
 print()
 print('Exp 2: Using Only Numerical and Categorical Features')
@@ -849,7 +853,7 @@ for label in np.unique(db_labels):
         print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
         print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
 print('Data points classified as noise')
-db_retriever.get_noise_data()
+print(db_retriever.get_noise_data())
 
 print()
 print('Exp 3: Using Only Text Features')
@@ -921,13 +925,13 @@ print('Dataset with Labels from DBSCAN in Exp 3')
 print(df_with_labels.head())
 for label in np.unique(db_labels):
     if label != -1:
-        print(f'Data points that belong to cluster {label} from DBSCAN in Exp 2')
+        print(f'Data points that belong to cluster {label} from DBSCAN in Exp 3')
         print(db_retriever.get_cluster_data(label))
         print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
         print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
         print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
 print('Data points classified as noise')
-db_retriever.get_noise_data()
+print(db_retriever.get_noise_data())
 
 print()
 print('---- VISUALIZE THE METRIC EVALUATION ----')
@@ -939,4 +943,4 @@ sil_scores = [sil_ex1, sil_ex2, sil_ex3]
 cal_scores = [cal_ex1, cal_ex2, cal_ex3]
 
 plot_silhouette_bar_across_experiments(model_names, sil_scores)
-visualize_ch_index_across_experiments(model_names,cal_scores)
+visualize_ch_index_across_experiments(model_names, cal_scores)
