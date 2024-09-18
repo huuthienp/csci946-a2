@@ -1,40 +1,63 @@
+# Standard library imports
+import re
+import subprocess
+import sys
+import warnings
 
-# Import necessary libraries
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", package])
+warnings.filterwarnings('ignore')
+
 try:
-    import sys
-    import subprocess
-    import nltk
-    import re
-    import pandas as pd
-    import numpy as np
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-    import hdbscan
-    import umap
-    import optuna
-    from mpl_toolkits.mplot3d import Axes3D
-    from sklearn.preprocessing import MinMaxScaler, StandardScaler, OneHotEncoder
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.cluster import KMeans, DBSCAN
-    from sklearn.decomposition import PCA
-    from sklearn.metrics import silhouette_score, calinski_harabasz_score
-    from nltk.corpus import stopwords
-    import warnings
-    warnings.filterwarnings('ignore')
-except ImportError:
-    print("Some packages are required to be installed")
-    print("Installing expected packages")
-    install('pip')
-    install('nltk')
-    # install('matplotlib')
-    install('hdbscan')
-    install('umap-learn')
-    install('optuna')
-    install('scikit-learn')
-    install('plotly')
+    subprocess.check_call([sys.executable, '-m', 'ensurepip'])
+except Exception as e:
+    print(e, file=sys.stderr)
 
+def ensure_module_installed(module_name):
+    try:
+        __import__(module_name)
+        print(f'Module "{module_name}" imported successfully.')
+    except ImportError:
+        print(f'Module "{module_name}" not found, attempting to install...')
+        try:
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', module_name])
+            print(f'Module "{module_name}" installed successfully.')
+        except Exception as e:
+            print(e, file=sys.stderr)
+
+MODULES = [
+    'matplotlib',
+    'nltk',
+    'numpy',
+    'optuna',
+    'pandas',
+    'seaborn',
+    'scikit-learn',
+    'umap'
+]
+
+for m in MODULES:
+    ensure_module_installed(m)
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import seaborn as sns
+
+# Machine learning and data processing
+from sklearn.preprocessing import StandardScaler
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans, DBSCAN
+from sklearn.metrics import silhouette_score, calinski_harabasz_score
+
+# Natural Language Processing
+import nltk
+from nltk.corpus import stopwords
+
+# Dimensionality reduction
+import umap
+
+# Hyperparameter optimization
+import optuna
 
 def find_columns_with_missing(data, columns):
     """Finding features that have a lot of missing data"""
