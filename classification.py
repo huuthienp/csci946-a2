@@ -315,8 +315,6 @@ df_preprocessed = df_preprocessed.drop(columns=['cleaned_description', 'cleaned_
 
 df_preprocessed = pd.concat([df_preprocessed, rgb_df], axis=1)
 
-df_preprocessed = pd.concat([df_preprocessed, rgb_df], axis=1)
-
 # Import necessary libraries for classification
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
