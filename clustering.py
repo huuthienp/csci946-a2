@@ -1,5 +1,6 @@
 # Standard library imports
 import re
+import string
 import subprocess
 import sys
 import warnings
@@ -53,6 +54,8 @@ from sklearn.metrics import silhouette_score, calinski_harabasz_score
 # Natural Language Processing
 import nltk
 from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
 
 # Dimensionality reduction
 import umap
@@ -612,12 +615,6 @@ nltk.download('stopwords')
 nltk.download('punkt')
 nltk.download('punkt_tab')
 nltk.download('wordnet')
-
-import string
-import re
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from nltk.stem import WordNetLemmatizer
 
 df_preprocessed['description'].fillna('', inplace=True)
 df_preprocessed['text'].fillna('', inplace=True)
