@@ -34,7 +34,7 @@ except ImportError:
     install('optuna')
     install('scikit-learn')
     install('plotly')
-    
+
 
 # Load the dataset
 df = pd.read_csv('twitter_user_data.csv', encoding='ISO-8859-1')
@@ -60,6 +60,7 @@ def find_columns_with_missing(data, columns):
             data_cleaned = data
         i += 1
     return missing, data_cleaned
+
 
 missing_col, df_cleaned = find_columns_with_missing(df, all_features)
 missing_col
@@ -302,7 +303,7 @@ df_preprocessed = df_preprocessed.drop(columns=categorical_features)
 def hex_to_rgb(hex_color):
     # Remove the '#' if it exists
     hex_color = hex_color.lstrip('#')
-    
+
     # Convert hex to integer and split into RGB components
     return [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
 
@@ -422,13 +423,13 @@ class KMeansClustering:
         def objective_kmeans(trial):
             n_clusters = trial.suggest_int('n_clusters', 2, 10)
             init_method = trial.suggest_categorical('init', ['k-means++', 'random'])
-            
+
             kmeans = KMeans(n_clusters=n_clusters, init=init_method, random_state=42)
             kmeans.fit(self.data)
             labels = kmeans.labels_
             score = silhouette_score(self.data, labels)
             return score
-        
+
         study = optuna.create_study(direction="maximize")
         study.optimize(objective_kmeans, n_trials=n_trials)
         self.best_params = study.best_params
@@ -483,14 +484,14 @@ class KMeansClustering:
         plt.ylabel('Inertia (Sum of squared distances)')
         plt.grid(True)
         plt.show()
-    
+
     def output_label(self):
         return self.kmeans_model.labels_
-    
+
     def silhoutte(self):
         score = silhouette_score(self.data, self.kmeans_model.labels_)
         return score
-    
+
     def calinski(self):
         if len(np.unique(self.kmeans_model.labels_)) > 1:  # Only calculate if there are clusters
             score = calinski_harabasz_score(self.data, self.kmeans_model.labels_)
@@ -508,7 +509,7 @@ class DBSCANClustering:
         def objective_dbscan(trial):
             eps = trial.suggest_float('eps', 0.1, 2.0)
             min_samples = trial.suggest_int('min_samples', 3, 20)
-            
+
             dbscan = DBSCAN(eps=eps, min_samples=min_samples)
             dbscan.fit(self.data)
             labels = dbscan.labels_
@@ -529,23 +530,23 @@ class DBSCANClustering:
 
     def visualize_clusters_and_outliers_3D(self, umap_embedding, feature):
         labels = self.dbscan_model.labels_
-        
+
         # Separate clustered points and noise points
         clustered_points = umap_embedding[labels >= 0]  # Points part of a cluster
         clustered_labels = labels[labels >= 0]
         outliers = umap_embedding[labels == -1]  # Noise points
-        
+
         # Create a 3D plot
         fig = plt.figure(figsize=(10, 7))
         ax = fig.add_subplot(111, projection='3d')
-        
+
         # Plot the clustered points in different colors
         scatter = ax.scatter(clustered_points[:, 0], clustered_points[:, 1], clustered_points[:, 2], 
                              c=clustered_labels, cmap='viridis', s=30)
-        
+
         # Plot the outliers (noise points) in red with 'x' markers
         ax.scatter(outliers[:, 0], outliers[:, 1], outliers[:, 2], c='red', marker='x', s=80, label='Outliers')
-        
+
         # Add labels and title
         ax.set_xlabel('UMAP Dimension 1')
         ax.set_ylabel('UMAP Dimension 2')
@@ -558,11 +559,11 @@ class DBSCANClustering:
 
     def output_label(self):
         return self.dbscan_model.labels_
-    
+
     def silhoutte(self):
         score = silhouette_score(self.data, self.dbscan_model.labels_)
         return score
-    
+
     def calinski(self):
         if len(np.unique(self.dbscan_model.labels_)) > 1:  # Only calculate if there are clusters
             score = calinski_harabasz_score(self.data, self.dbscan_model.labels_)
@@ -580,7 +581,7 @@ class DBSCANClustering:
 #         def objective_hdbscan(trial):
 #             min_cluster_size = trial.suggest_int('min_cluster_size', 5, 50)
 #             min_samples = trial.suggest_int('min_samples', 3, 20)
-            
+
 #             hdbscan_model = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, min_samples=min_samples)
 #             hdbscan_model.fit(self.data)
 #             labels = hdbscan_model.labels_
@@ -599,26 +600,26 @@ class DBSCANClustering:
 #         self.hdbscan_model = hdbscan.HDBSCAN(min_cluster_size=self.best_params['min_cluster_size'],
 #                                              min_samples=self.best_params['min_samples'])
 #         self.hdbscan_model.fit(self.data)
-    
+
 #     def visualize_clusters_and_outliers_3D(self, umap_embedding, feature):
 #         labels = self.hdbscan_model.labels_
-        
+
 #         # Separate clustered points and noise points
 #         clustered_points = umap_embedding[labels >= 0]  # Points part of a cluster
 #         clustered_labels = labels[labels >= 0]
 #         outliers = umap_embedding[labels == -1]  # Noise points
-        
+
 #         # Create a 3D plot
 #         fig = plt.figure(figsize=(10, 7))
 #         ax = fig.add_subplot(111, projection='3d')
-        
+
 #         # Plot the clustered points in different colors
 #         scatter = ax.scatter(clustered_points[:, 0], clustered_points[:, 1], clustered_points[:, 2], 
 #                              c=clustered_labels, cmap='viridis', s=30)
-        
+
 #         # Plot the outliers (noise points) in red with 'x' markers
 #         ax.scatter(outliers[:, 0], outliers[:, 1], outliers[:, 2], c='red', marker='x', s=80, label='Outliers')
-        
+
 #         # Add labels and title
 #         ax.set_xlabel('UMAP Dimension 1')
 #         ax.set_ylabel('UMAP Dimension 2')
@@ -631,19 +632,19 @@ class DBSCANClustering:
 
 #     def output_label(self):
 #         return self.hdbscan_model.labels_
-    
+
 #     def silhoutte(self):
 #         score = silhouette_score(self.data, self.hdbscan_model.labels_)
 #         return score
-    
+
 #     def calinski(self):
 #         if len(np.unique(self.hdbscan_model.labels_)) > 1:  # Only calculate if there are clusters
 #             score = calinski_harabasz_score(self.data, self.hdbscan_model.labels_)
 #         else:
 #             score = np.nan  # If only one cluster (or all noise), set to NaN
 #         return score
-    
-    
+
+
 class ClusteringDataRetriever:
     def __init__(self, data, labels):
         self.data = data
@@ -655,10 +656,10 @@ class ClusteringDataRetriever:
             df = pd.DataFrame(self.data)
         else:
             df = self.data.copy()  # If already a DataFrame
-        
+
         # Add a new column for the cluster labels
         df['Cluster_Label'] = self.labels
-        
+
         return df[['gender', 'gender:confidence', 'Cluster_Label']]
 
     def get_cluster_data(self, cluster_label):
@@ -917,11 +918,11 @@ def plot_silhouette_bar_across_experiments(model_names, silhouette_scores):
     bar_width = 0.2
     index = np.arange(n_experiments)
     plt.figure(figsize=(12, 6))
-    
+
     for i, model_name in enumerate(model_names):
         sil_scores = [exp_scores[i] for exp_scores in silhouette_scores]
         plt.bar(index + i * bar_width,sil_scores, bar_width, label=model_name)
-    
+
     plt.xlabel('Experiments')
     plt.ylabel('Silhouette scores')
     plt.title('Silhouette scores Across Models and Experiments')
@@ -937,11 +938,11 @@ def visualize_ch_index_across_experiments(model_names, ch_scores):
     bar_width = 0.2
     index = np.arange(n_experiments)
     plt.figure(figsize=(12, 6))
-    
+
     for i, model_name in enumerate(model_names):
         ch_score = [exp_scores[i] for exp_scores in ch_scores]
         plt.bar(index + i * bar_width, ch_score, bar_width, label=model_name)
-    
+
     plt.xlabel('Experiments')
     plt.ylabel('Calinski-Harabasz Index')
     plt.title('Calinski-Harabasz Index Across Models and Experiments')
@@ -954,7 +955,3 @@ cal_scores = [cal_ex1, cal_ex2, cal_ex3]
 
 plot_silhouette_bar_across_experiments(model_names, sil_scores)
 visualize_ch_index_across_experiments(model_names,cal_scores)
-
-
-
-
