@@ -6,36 +6,37 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
+REQS = [
+    ('pip', 'pip==24.2'),
+    ('matplotlib', 'matplotlib==3.9.2'),
+    ('nltk', 'nltk==3.9.1'),
+    ('numpy', 'numpy==2.1.1'),
+    ('optuna', 'optuna==4.0.0'),
+    ('pandas', 'pandas==2.2.2'),
+    ('seaborn', 'seaborn==0.13.2'),
+    ('sklearn', 'scikit-learn==1.5.2'),
+    ('umap', 'umap==0.1.1')
+]
+
 try:
     subprocess.check_call([sys.executable, '-m', 'ensurepip'])
 except Exception as e:
     print(e, file=sys.stderr)
 
-def ensure_module_installed(module_name):
+
+def ensure_installed(module_info):
+    _, install_str = module_info
     try:
-        __import__(module_name)
-        print(f'Module "{module_name}" imported successfully.')
-    except ImportError:
-        print(f'Module "{module_name}" not found, attempting to install...')
-        try:
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', module_name])
-            print(f'Module "{module_name}" installed successfully.')
-        except Exception as e:
-            print(e, file=sys.stderr)
+        subprocess.check_call([sys.executable, '-m',
+                               'pip', 'install', '--quiet',
+                               install_str])
+        print(f'Installed "{install_str}".')
+    except Exception as e:
+        print(e, file=sys.stderr)
 
-MODULES = [
-    'matplotlib',
-    'nltk',
-    'numpy',
-    'optuna',
-    'pandas',
-    'seaborn',
-    'scikit-learn',
-    'umap'
-]
 
-for m in MODULES:
-    ensure_module_installed(m)
+for m in REQS:
+    ensure_installed(m)
 
 import numpy as np
 import pandas as pd
@@ -58,6 +59,7 @@ import umap
 
 # Hyperparameter optimization
 import optuna
+
 
 def find_columns_with_missing(data, columns):
     """Finding features that have a lot of missing data"""
