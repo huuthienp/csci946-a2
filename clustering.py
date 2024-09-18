@@ -663,8 +663,6 @@ df_preprocessed = df_preprocessed.drop(columns=['cleaned_description', 'cleaned_
 
 df_preprocessed = pd.concat([df_preprocessed, rgb_df], axis=1)
 
-df_preprocessed = pd.concat([df_preprocessed, rgb_df], axis=1)
-
 df_cate = df_preprocessed[['tweet_location_encoded', 'user_timezone_encoded']].copy()
 
 print()
