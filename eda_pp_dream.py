@@ -319,6 +319,9 @@ rgb_df = pd.concat([rgb_df, pd.DataFrame(df_preprocessed['sidebar_color_rgb'].to
 #Drop the original color features
 df_preprocessed = df_preprocessed.drop(columns=['link_color', 'sidebar_color', 'link_color_rgb', 'sidebar_color_rgb'])
 
+#keep the gender confidence preprocessed to be able to use it in regression task
+preprocessed_gender_conf  = df_preprocessed["gender:confidence"].copy()
+
 #Check if all required features are there
 print(f'All features that will be used are {df_preprocessed.columns.tolist()}')
 
