@@ -1,4 +1,3 @@
-# Standard library imports
 import re
 import string
 import subprocess
@@ -16,6 +15,7 @@ REQS = [
     ('pandas', 'pandas==2.2.2'),
     ('seaborn', 'seaborn==0.13.2'),
     ('sklearn', 'scikit-learn==1.5.2'),
+    ('statsmodels', 'statsmodels==0.14.3')
     ('umap', 'umap==0.1.1')
 ]
 
@@ -39,8 +39,11 @@ def ensure_installed(module_info):
 for m in REQS:
     ensure_installed(m)
 
+# Standard libraries
 import numpy as np
 import pandas as pd
+
+# Visualization
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
@@ -49,7 +52,13 @@ import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans, DBSCAN
-from sklearn.metrics import silhouette_score, calinski_harabasz_score
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, mean_squared_error
+
+# Statistical modeling
+import statsmodels.api as sm
+from statsmodels.tools.tools import add_constant
 
 # Natural Language Processing
 import nltk

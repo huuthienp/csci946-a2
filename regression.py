@@ -1,38 +1,85 @@
-# CODE FOR REGRESSION 
-
-#STARTS BY RUNNING DREAM PRE-PROCESSING CODE - RUN ONCE IN THE MAIN FILE 
-
-import sys
-import subprocess
-import nltk
 import re
-import pandas as pd
-import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-#import hdbscan
-#import umap
-#import optuna
-#from mpl_toolkits.mplot3d import Axes3D
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, OneHotEncoder
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import KMeans, DBSCAN, SpectralClustering
-from sklearn.decomposition import PCA, IncrementalPCA
-from sklearn.metrics import silhouette_score, davies_bouldin_score
-#from sklearn.model_selection import train_test_split
-from nltk.corpus import stopwords
-#from sklearn.decomposition import TruncatedSVD
+import string
+import subprocess
+import sys
 import warnings
 
+warnings.filterwarnings('ignore')
+
+REQS = [
+    ('pip', 'pip==24.2'),
+    ('matplotlib', 'matplotlib==3.9.2'),
+    ('nltk', 'nltk==3.9.1'),
+    ('numpy', 'numpy==2.1.1'),
+    ('optuna', 'optuna==4.0.0'),
+    ('pandas', 'pandas==2.2.2'),
+    ('seaborn', 'seaborn==0.13.2'),
+    ('sklearn', 'scikit-learn==1.5.2'),
+    ('statsmodels', 'statsmodels==0.14.3')
+    ('umap', 'umap==0.1.1')
+]
+
+try:
+    subprocess.check_call([sys.executable, '-m', 'ensurepip'])
+except Exception as e:
+    print(e, file=sys.stderr)
+
+
+def ensure_installed(module_info):
+    _, install_str = module_info
+    try:
+        subprocess.check_call([sys.executable, '-m',
+                               'pip', 'install', '--quiet',
+                               install_str])
+        print(f'Installed "{install_str}".')
+    except Exception as e:
+        print(e, file=sys.stderr)
+
+
+for m in REQS:
+    ensure_installed(m)
+
+# Standard libraries
+import numpy as np
+import pandas as pd
+
+# Visualization
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import seaborn as sns
+
+# Machine learning and data processing
+from sklearn.preprocessing import StandardScaler
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans, DBSCAN
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, mean_squared_error
+
+# Statistical modeling
+import statsmodels.api as sm
+from statsmodels.tools.tools import add_constant
+
+# Natural Language Processing
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+
+# Dimensionality reduction
+import umap
+
+# Hyperparameter optimization
+import optuna
 
 # Load the dataset
 df = pd.read_csv('twitter_user_data.csv', encoding='ISO-8859-1')
 
 # Quick view of the dataset
-print('The information of the dataset')
-print(df.info())
-print('The first few rows of the dataset')
-print(df.head())
+# print('The information of the dataset')
+# print(df.info())
+# print('The first few rows of the dataset')
+# print(df.head())
 
 all_features = df.columns
 #Finding features that have a lot of missing data
@@ -52,10 +99,10 @@ def find_columns_with_missing(data, columns):
 
 missing_col, df_cleaned = find_columns_with_missing(df, all_features)
 missing_col
-print('The information of the cleaned dataset')
-print(df_cleaned.info())
-print('The first few rows of the cleaned dataset')
-print(df_cleaned.head())
+# print('The information of the cleaned dataset')
+# print(df_cleaned.info())
+# print('The first few rows of the cleaned dataset')
+# print(df_cleaned.head())
 
 # Dropping rows where 'gender' is missing
 df_cleaned = df_cleaned.dropna(subset=['gender'])
@@ -64,10 +111,10 @@ df_cleaned = df_cleaned.dropna(subset=['gender'])
 df_cleaned = df_cleaned.drop(columns=['profile_yn'])
 
 # Now that we have handled the missing data, you can proceed with further analysis
-print('The information of the cleaned dataset')
-print(df_cleaned.info())
-print('The first few rows of the cleaned dataset')
-print(df_cleaned.head())
+# print('The information of the cleaned dataset')
+# print(df_cleaned.info())
+# print('The first few rows of the cleaned dataset')
+# print(df_cleaned.head())
 
 # Exploratory Data Analysis (EDA)
 current_num_features = df.select_dtypes(include=[np.number])
@@ -77,7 +124,7 @@ for feature in current_num_features:
     plt.figure(figsize=(8, 6))
     sns.histplot(df_cleaned, x=feature, hue='gender', bins=30, kde=True)
     plt.title(f'Distribution of {feature} by Gender')
-    plt.show()
+    # plt.show()
 
 # Distribution of gender
 plt.figure(figsize=(8, 6))
@@ -85,20 +132,20 @@ sns.countplot(x='gender', data=df_cleaned)
 plt.title('Distribution of Gender')
 plt.xlabel('Gender')
 plt.ylabel('count')
-plt.show()
+# plt.show()
 
 # Plot distribution of 'tweet_count' and 'retweet_count'
 for column in ['tweet_count', 'retweet_count']:
     plt.figure(figsize=(8, 6))
     sns.histplot(data=df_cleaned, x=column, kde=True, bins=30)
     plt.title(f'Distribution of {column.replace("_", " ").capitalize()}')
-    plt.show()
+    # plt.show()
 
 # Correlation analysis for numerical features
 plt.figure(figsize=(10, 8))
 sns.heatmap(df_cleaned[['tweet_count', 'retweet_count', 'fav_number']].corr(), annot=True, cmap='coolwarm', vmin=-1, vmax=1)
 plt.title('Correlation Matrix of Numerical Features')
-plt.show()
+# plt.show()
 
 # Extracting date from 'created' and 'tweet_created' for time-based analysis
 df_cleaned['profile_created_year'] = pd.to_datetime(df_cleaned['created']).dt.year
@@ -121,7 +168,7 @@ sns.histplot(df_cleaned['profile_created_year'], kde=False, bins=15)
 plt.title('Distribution of Profile Creation Years')
 plt.xlabel('Profile Created Year')
 plt.ylabel('count')
-plt.show()
+# plt.show()
 
 # Plotting the histogram of tweets per day
 plt.figure(figsize=(10, 6))
@@ -129,7 +176,7 @@ sns.histplot(df_cleaned['tweets_per_day'], bins=50, kde=True)
 plt.title('Distribution of Tweets Per Day')
 plt.xlabel('Tweets Per Day')
 plt.ylabel('Frequency')
-plt.show()
+# plt.show()
 
 #show the relationship between account age and tweets per day
 plt.figure(figsize=(10, 6))
@@ -137,7 +184,7 @@ sns.scatterplot(x='account_age', y='tweets_per_day', data=df_cleaned)
 plt.title('Account Age vs. Tweets Per Day')
 plt.xlabel('Account Age (Days)')
 plt.ylabel('Tweets Per Day')
-plt.show()
+# plt.show()
 
 # Exploring 'link_color' and 'sidebar_color' features
 
@@ -145,14 +192,14 @@ plt.show()
 link_color_nan_count = df_cleaned['link_color'].isnull().sum()
 sidebar_color_nan_count = df_cleaned['sidebar_color'].isnull().sum()
 
-print(f"Number of NaN values in 'link_color': {link_color_nan_count}")
-print(f"Number of NaN values in 'sidebar_color': {sidebar_color_nan_count}")
+# print(f"Number of NaN values in 'link_color': {link_color_nan_count}")
+# print(f"Number of NaN values in 'sidebar_color': {sidebar_color_nan_count}")
 
 #Check how many available colors in 'link_color' and 'sidebar_color' features
 link_color_count = len(df_cleaned['link_color'].unique())
 sidebar_color_count = len(df_cleaned['sidebar_color'].unique())
-print(f'the number of link color is {link_color_count}')
-print(f'the number of side bar color is {sidebar_color_count}')
+# print(f'the number of link color is {link_color_count}')
+# print(f'the number of side bar color is {sidebar_color_count}')
 
 # Apply the function to 'link_color' and 'sidebar_color'
 df_cleaned['link_color'] = df_cleaned['link_color'].apply(lambda x: f'#{x}' if len(x) == 6 else '#000000')
@@ -161,8 +208,8 @@ df_cleaned['sidebar_color'] = df_cleaned['sidebar_color'].apply(lambda x: f'#{x}
 # Drop rows where 'sidebar_color' is still NaN
 df_cleaned = df_cleaned.dropna(subset=['link_color'])
 df_cleaned = df_cleaned.dropna(subset=['sidebar_color'])
-print(f"Number of NaN values in 'link_color': {df_cleaned['link_color'].isnull().sum()}")
-print(f"Number of NaN values in 'sidebar_color': {df_cleaned['sidebar_color'].isnull().sum()}")
+# print(f"Number of NaN values in 'link_color': {df_cleaned['link_color'].isnull().sum()}")
+# print(f"Number of NaN values in 'sidebar_color': {df_cleaned['sidebar_color'].isnull().sum()}")
 
 #top 15 colors
 top_sidebar_colors = df_cleaned['sidebar_color'].value_counts().iloc[:15].index.tolist()
@@ -177,7 +224,7 @@ plt.title('Top 15 Most Common Profile sidebar_color')
 plt.ylabel('Sidebar Color')
 plt.xlabel('count')
 plt.grid()
-plt.show()
+# plt.show()
 
 # Extract top 10 most common link colors 
 sns.set(rc={'axes.facecolor':'lightgrey', 'figure.facecolor':'white'})
@@ -187,7 +234,7 @@ plt.title('Top 15 Most Common Profile link_color')
 plt.ylabel('Link Color')
 plt.xlabel('count')
 plt.grid()
-plt.show()
+# plt.show()
 
 # count plot for sidebar_color vs. gender
 plt.figure(figsize=(10, 6))
@@ -198,7 +245,7 @@ plt.title('Top 15 Most Common Sidebar Colors by Gender')
 plt.xlabel('Sidebar Color')
 plt.ylabel('count')
 plt.xticks(rotation=45)
-plt.show()
+# plt.show()
 
 # count plot for link_color vs. gender
 plt.figure(figsize=(10, 6))
@@ -208,7 +255,7 @@ plt.title('Top 15 Most Common link Colors by Gender')
 plt.xlabel('Link Color')
 plt.ylabel('count')
 plt.xticks(rotation=45)
-plt.show()
+# plt.show()
 
 # Scatter plot for link_color vs. tweet_count with gender as hue
 plt.figure(figsize=(10, 6))
@@ -218,7 +265,7 @@ plt.title('Link Colors vs. Tweet count with Gender')
 plt.xlabel('Link Color')
 plt.ylabel('Tweet count')
 plt.xticks(rotation=45)
-plt.show()
+# plt.show()
 
 # Scatter plot for sidebar_color vs. tweet_count with gender as hue
 plt.figure(figsize=(10, 6))
@@ -228,7 +275,7 @@ plt.title('Sidebar Colors vs. Tweet count with Gender')
 plt.xlabel('Sidebar Color')
 plt.ylabel('Tweet count')
 plt.xticks(rotation=45)
-plt.show()
+# plt.show()
 
 # Select columns to be used
 col = ['gender', 'gender:confidence', 'description', 'favorites_per_day','link_color',
@@ -241,7 +288,7 @@ df_preprocessed = df_preprocessed[df_preprocessed['gender'] != 'unknown']
 # Plot correlation matrix
 corr_matrix = df_preprocessed.select_dtypes(include=[np.number]).corr()
 sns.heatmap(corr_matrix, annot=True)
-plt.show()
+# plt.show()
 
 # Drop one feature from highly correlated pairs (correlation > 0.9)
 upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
@@ -272,8 +319,8 @@ df_cate = df_preprocessed[['tweet_location_encoded', 'user_timezone_encoded']].c
 df_preprocessed['gender'] = df_preprocessed['gender'].replace({'male': 0, 'female': 1, 'brand': 2})
 
 # Check for unique values in the 'gender' column after replacement
-print(df_preprocessed['gender'].unique())
-print(df_preprocessed.info())
+# print(df_preprocessed['gender'].unique())
+# print(df_preprocessed.info())
 
 # Distribution of gender
 plt.figure(figsize=(8, 6))
@@ -281,7 +328,7 @@ sns.countplot(x='gender', data=df_preprocessed)
 plt.title('Distribution of Gender')
 plt.xlabel('Gender')
 plt.ylabel('count')
-plt.show()
+# plt.show()
 
 df_gender = df_preprocessed[['gender', 'gender:confidence']].copy()
 
@@ -311,14 +358,14 @@ df_preprocessed = df_preprocessed.drop(columns=['link_color', 'sidebar_color', '
 preprocessed_gender_conf  = df_preprocessed["gender:confidence"].copy()
 
 #Check if all required features are there
-print(f'All features that will be used are {df_preprocessed.columns.tolist()}')
+# print(f'All features that will be used are {df_preprocessed.columns.tolist()}')
 
 # Define the numerical features to scale (filtering for int64 and float64 columns)
 numerical_features = df_preprocessed.select_dtypes(include=[np.number])
 #print(f'All current numerical features are {numerical_features.columns.tolist()}')
 
-print('After all, here is the information of the dataset')
-print(df_preprocessed.info())
+# print('After all, here is the information of the dataset')
+# print(df_preprocessed.info())
 
 # NLP Processing
 nltk.download('stopwords')
@@ -337,7 +384,7 @@ df_preprocessed['text'].fillna('', inplace=True)
 #df_preprocessed['name'].fillna('', inplace=True)
 
 #Check the text features if they still contain NaN
-print(df_preprocessed.select_dtypes(include=[object]))
+# print(df_preprocessed.select_dtypes(include=[object]))
 
 
 # Define stopwords and lemmatizer
@@ -365,14 +412,14 @@ df_preprocessed['cleaned_text'] = df_preprocessed['text'].apply(lambda x: prepro
 #df_preprocessed['cleaned_name'] = df_preprocessed['name'].apply(lambda x: preprocess_text(str(x)))
 
 # Check the preprocessed data with preprocessed text features
-print(df_preprocessed[['description', 'cleaned_description', 'text', 'cleaned_text']].head())
+# print(df_preprocessed[['description', 'cleaned_description', 'text', 'cleaned_text']].head())
 
 #Drop the original text features
 df_preprocessed = df_preprocessed.drop(columns=['description','text'])
 
 #Check the preprocessed dataset in the present
-print('The current information of pre-processed dataset before text preprocessing')
-print(df_preprocessed.info())
+# print('The current information of pre-processed dataset before text preprocessing')
+# print(df_preprocessed.info())
 
 
 # Initialize TFIDF vectorizer for text features
@@ -397,15 +444,10 @@ df_preprocessed = df_preprocessed.drop(columns=['cleaned_description', 'cleaned_
 
 df_preprocessed = pd.concat([df_preprocessed, rgb_df], axis=1)
 
-print(df_preprocessed.head())
+# print(df_preprocessed.head())
 
 #================================================REGRSSION CODE============================
 ## Complete py code ¨
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-import statsmodels.api as sm
-from statsmodels.tools.tools import add_constant
 
 #finish preprocessing for regression
 df_preprocessed_reg = df_preprocessed.copy()
