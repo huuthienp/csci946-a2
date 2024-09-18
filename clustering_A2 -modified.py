@@ -28,7 +28,7 @@ except ImportError:
     print("Installing expected packages")
     install('pip')
     install('nltk')
-    #install('matplotlib')
+    # install('matplotlib')
     install('hdbscan')
     install('umap-learn')
     install('optuna')
@@ -36,18 +36,8 @@ except ImportError:
     install('plotly')
 
 
-# Load the dataset
-df = pd.read_csv('twitter_user_data.csv', encoding='ISO-8859-1')
-
-# Quick view of the dataset
-print('The information of the dataset')
-print(df.info())
-print('The first few rows of the dataset')
-print(df.head())
-
-all_features = df.columns
-#Finding features that have a lot of missing data
 def find_columns_with_missing(data, columns):
+    """Finding features that have a lot of missing data"""
     missing = []
     i = 0
     for col in columns:
@@ -61,6 +51,270 @@ def find_columns_with_missing(data, columns):
         i += 1
     return missing, data_cleaned
 
+
+def hex_to_rgb(hex_color):
+    """Function to convert hex to RGB"""
+    # Remove the '#' if it exists
+    hex_color = hex_color.lstrip('#')
+
+    # Convert hex to integer and split into RGB components
+    return [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
+
+
+def preprocess_text(text):
+    """Preprocessing function"""
+    text = text.lower()
+    # Remove punctuation and special characters
+    text = text.translate(str.maketrans('', '', string.punctuation))  # Removes punctuation
+    text = re.sub(r'[^A-Za-z\s]', '', text)  
+    # Tokenize the text
+    tokens = word_tokenize(text)
+    # Remove stopwords
+    tokens = [word for word in tokens if word not in stop_words]
+    # Lemmatize the tokens
+    tokens = [lemmatizer.lemmatize(word) for word in tokens]
+    # Join tokens back into a string
+    return ' '.join(tokens)
+
+
+def plot_silhouette_bar_across_experiments(model_names, silhouette_scores):
+    n_experiments = len(silhouette_scores)
+    n_models = len(model_names)
+    bar_width = 0.2
+    index = np.arange(n_experiments)
+    plt.figure(figsize=(12, 6))
+
+    for i, model_name in enumerate(model_names):
+        sil_scores = [exp_scores[i] for exp_scores in silhouette_scores]
+        plt.bar(index + i * bar_width,sil_scores, bar_width, label=model_name)
+
+    plt.xlabel('Experiments')
+    plt.ylabel('Silhouette scores')
+    plt.title('Silhouette scores Across Models and Experiments')
+    plt.xticks(index + bar_width * (n_models - 1) / 2, [f'Experiment {i+1}' for i in range(n_experiments)])
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def visualize_ch_index_across_experiments(model_names, ch_scores):
+
+    n_experiments = len(ch_scores)
+    n_models = len(model_names)
+    bar_width = 0.2
+    index = np.arange(n_experiments)
+    plt.figure(figsize=(12, 6))
+
+    for i, model_name in enumerate(model_names):
+        ch_score = [exp_scores[i] for exp_scores in ch_scores]
+        plt.bar(index + i * bar_width, ch_score, bar_width, label=model_name)
+
+    plt.xlabel('Experiments')
+    plt.ylabel('Calinski-Harabasz Index')
+    plt.title('Calinski-Harabasz Index Across Models and Experiments')
+    plt.xticks(index + bar_width * (n_models - 1) / 2, [f'Experiment {i+1}' for i in range(n_experiments)])
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+class KMeansClustering:
+    def __init__(self, data):
+        self.data = data
+        self.best_params = None
+        self.kmeans_model = None
+
+    def tune_hyperparameters(self, n_trials=50):
+        def objective_kmeans(trial):
+            n_clusters = trial.suggest_int('n_clusters', 2, 10)
+            init_method = trial.suggest_categorical('init', ['k-means++', 'random'])
+
+            kmeans = KMeans(n_clusters=n_clusters, init=init_method, random_state=42)
+            kmeans.fit(self.data)
+            labels = kmeans.labels_
+            score = silhouette_score(self.data, labels)
+            return score
+
+        study = optuna.create_study(direction="maximize")
+        study.optimize(objective_kmeans, n_trials=n_trials)
+        self.best_params = study.best_params
+        print("Best params:", self.best_params)
+
+    def fit_model(self):
+        self.kmeans_model = KMeans(n_clusters=self.best_params['n_clusters'],
+                                   init=self.best_params['init'],
+                                   random_state=42)
+        self.kmeans_model.fit(self.data)
+
+    def visualize_clusters(self, umap_embedding, feature):
+        labels = self.kmeans_model.labels_
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111, projection='3d')  
+        # Scatter plot in 3D
+        scatter = ax.scatter(
+            umap_embedding[:, 0],  
+            umap_embedding[:, 1],  
+            umap_embedding[:, 2],  
+            c=labels,       
+            cmap='viridis',       
+            s=30                   
+        )
+        # Add labels and title
+        ax.set_xlabel('UMAP Dimension 1')
+        ax.set_ylabel('UMAP Dimension 2')
+        ax.set_zlabel('UMAP Dimension 3')
+        plt.title(f'3D UMAP of K-Means Clusters on All Feature Types {feature}')
+        # Add a color bar for better visual distinction of clusters
+        plt.colorbar(scatter)
+        # Show the plot
+        plt.show()
+
+    def plot_elbow_method(self, k_range=(2, 10)):
+        """
+        Plot the Elbow Method for choosing the optimal number of clusters
+        Args:
+        - k_range: tuple, range of cluster numbers to evaluate
+        """
+        inertia = []
+        K = range(k_range[0], k_range[1] + 1)
+        for k in K:
+            kmeans = KMeans(n_clusters=k, random_state=42)
+            kmeans.fit(self.data)
+            inertia.append(kmeans.inertia_)  # Sum of squared distances to closest cluster center
+
+        plt.figure(figsize=(8, 6))
+        plt.plot(K, inertia, 'bo-', markersize=8)
+        plt.title('Elbow Method for Optimal K')
+        plt.xlabel('Number of clusters')
+        plt.ylabel('Inertia (Sum of squared distances)')
+        plt.grid(True)
+        plt.show()
+
+    def output_label(self):
+        return self.kmeans_model.labels_
+
+    def silhoutte(self):
+        score = silhouette_score(self.data, self.kmeans_model.labels_)
+        return score
+
+    def calinski(self):
+        if len(np.unique(self.kmeans_model.labels_)) > 1:  # Only calculate if there are clusters
+            score = calinski_harabasz_score(self.data, self.kmeans_model.labels_)
+        else:
+            score = np.nan  # If only one cluster (or all noise), set to NaN
+        return score
+
+
+class DBSCANClustering:
+    def __init__(self, data):
+        self.data = data
+        self.best_params = None
+        self.dbscan_model = None
+
+    def tune_hyperparameters(self, n_trials=50):
+        def objective_dbscan(trial):
+            eps = trial.suggest_float('eps', 0.1, 2.0)
+            min_samples = trial.suggest_int('min_samples', 3, 20)
+
+            dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+            dbscan.fit(self.data)
+            labels = dbscan.labels_
+            if len(set(labels)) > 1:
+                score = silhouette_score(self.data, labels)
+            else:
+                score = -1
+            return score
+
+        study = optuna.create_study(direction="maximize")
+        study.optimize(objective_dbscan, n_trials=n_trials)
+        self.best_params = study.best_params
+        print("Best params:", self.best_params)
+
+    def fit_model(self):
+        self.dbscan_model = DBSCAN(eps=self.best_params['eps'], min_samples=self.best_params['min_samples'])
+        self.dbscan_model.fit(self.data)
+
+    def visualize_clusters_and_outliers_3D(self, umap_embedding, feature):
+        labels = self.dbscan_model.labels_
+
+        # Separate clustered points and noise points
+        clustered_points = umap_embedding[labels >= 0]  # Points part of a cluster
+        clustered_labels = labels[labels >= 0]
+        outliers = umap_embedding[labels == -1]  # Noise points
+
+        # Create a 3D plot
+        fig = plt.figure(figsize=(10, 7))
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Plot the clustered points in different colors
+        scatter = ax.scatter(clustered_points[:, 0], clustered_points[:, 1], clustered_points[:, 2], 
+                             c=clustered_labels, cmap='viridis', s=30)
+
+        # Plot the outliers (noise points) in red with 'x' markers
+        ax.scatter(outliers[:, 0], outliers[:, 1], outliers[:, 2], c='red', marker='x', s=80, label='Outliers')
+
+        # Add labels and title
+        ax.set_xlabel('UMAP Dimension 1')
+        ax.set_ylabel('UMAP Dimension 2')
+        ax.set_zlabel('UMAP Dimension 3')
+        ax.set_title(f'DBSCAN 3D Clusters with Outliers {feature}')
+        # Add a legend and color bar for clusters
+        plt.legend()
+        plt.colorbar(scatter, ax=ax)
+        plt.show()
+
+    def output_label(self):
+        return self.dbscan_model.labels_
+
+    def silhoutte(self):
+        score = silhouette_score(self.data, self.dbscan_model.labels_)
+        return score
+
+    def calinski(self):
+        if len(np.unique(self.dbscan_model.labels_)) > 1:  # Only calculate if there are clusters
+            score = calinski_harabasz_score(self.data, self.dbscan_model.labels_)
+        else:
+            score = np.nan  # If only one cluster (or all noise), set to NaN
+        return score
+
+
+class ClusteringDataRetriever:
+    def __init__(self, data, labels):
+        self.data = data
+        self.labels = labels
+
+    def get_data_with_labels(self):
+        # If the data is in a numpy array, convert it to a pandas DataFrame
+        if isinstance(self.data, np.ndarray):
+            df = pd.DataFrame(self.data)
+        else:
+            df = self.data.copy()  # If already a DataFrame
+
+        # Add a new column for the cluster labels
+        df['Cluster_Label'] = self.labels
+
+        return df[['gender', 'gender:confidence', 'Cluster_Label']]
+
+    def get_cluster_data(self, cluster_label):
+        # Retrieve data points belonging to a specific cluster.
+        df = self.get_data_with_labels()
+        return df[df['Cluster_Label'] == cluster_label]
+
+    def get_noise_data(self):
+        # Retrieve the data points classified as noise (-1 label) in DBSCAN.
+        return self.get_cluster_data(-1)
+
+
+# Load the dataset
+df = pd.read_csv('twitter_user_data.csv', encoding='ISO-8859-1')
+
+# Quick view of the dataset
+print('The information of the dataset')
+print(df.info())
+print('The first few rows of the dataset')
+print(df.head())
+
+all_features = df.columns
 
 missing_col, df_cleaned = find_columns_with_missing(df, all_features)
 missing_col
@@ -81,7 +335,7 @@ print(df_cleaned.info())
 print('The first few rows of the cleaned dataset')
 print(df_cleaned.head())
 
-"""Exploratory Data Analysis (EDA)"""
+"Exploratory Data Analysis (EDA)"
 
 current_num_features = df.select_dtypes(include=[np.number])
 
@@ -299,14 +553,6 @@ df_gender = df_preprocessed[['gender', 'gender:confidence']].copy()
 # Drop the original categorical columns
 df_preprocessed = df_preprocessed.drop(columns=categorical_features)
 
-# Function to convert hex to RGB
-def hex_to_rgb(hex_color):
-    # Remove the '#' if it exists
-    hex_color = hex_color.lstrip('#')
-
-    # Convert hex to integer and split into RGB components
-    return [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
-
 # Convert 'link_color' values
 df_preprocessed['link_color_rgb'] = df_preprocessed['link_color'].apply(lambda x: hex_to_rgb(x) if isinstance(x, str) else (0,0,0))
 # Convert 'sidebar_color' values
@@ -352,21 +598,6 @@ print(df_preprocessed.select_dtypes(include=[object]))
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
 
-# Preprocessing function
-def preprocess_text(text):
-    text = text.lower()
-    #Remove punctuation and special characters
-    text = text.translate(str.maketrans('', '', string.punctuation))  # Removes punctuation
-    text = re.sub(r'[^A-Za-z\s]', '', text)  
-    #Tokenize the text
-    tokens = word_tokenize(text)
-    #Remove stopwords
-    tokens = [word for word in tokens if word not in stop_words]
-    #Lemmatize the tokens
-    tokens = [lemmatizer.lemmatize(word) for word in tokens]
-    #Join tokens back into a string
-    return ' '.join(tokens)
-
 # Apply preprocessing to the 'description', 'text', and 'name' columns
 df_preprocessed['cleaned_description'] = df_preprocessed['description'].apply(lambda x: preprocess_text(str(x)))
 df_preprocessed['cleaned_text'] = df_preprocessed['text'].apply(lambda x: preprocess_text(str(x)))
@@ -410,267 +641,8 @@ df_preprocessed = pd.concat([df_preprocessed, rgb_df], axis=1)
 df_cate = df_preprocessed[['tweet_location_encoded', 'user_timezone_encoded']].copy()
 
 """
-Clustering models 
+Clustering models
 """
-
-class KMeansClustering:
-    def __init__(self, data):
-        self.data = data
-        self.best_params = None
-        self.kmeans_model = None
-
-    def tune_hyperparameters(self, n_trials=50):
-        def objective_kmeans(trial):
-            n_clusters = trial.suggest_int('n_clusters', 2, 10)
-            init_method = trial.suggest_categorical('init', ['k-means++', 'random'])
-
-            kmeans = KMeans(n_clusters=n_clusters, init=init_method, random_state=42)
-            kmeans.fit(self.data)
-            labels = kmeans.labels_
-            score = silhouette_score(self.data, labels)
-            return score
-
-        study = optuna.create_study(direction="maximize")
-        study.optimize(objective_kmeans, n_trials=n_trials)
-        self.best_params = study.best_params
-        print("Best params:", self.best_params)
-
-    def fit_model(self):
-        self.kmeans_model = KMeans(n_clusters=self.best_params['n_clusters'],
-                                   init=self.best_params['init'],
-                                   random_state=42)
-        self.kmeans_model.fit(self.data)
-
-    def visualize_clusters(self, umap_embedding, feature):
-        labels = self.kmeans_model.labels_
-        fig = plt.figure(figsize=(10, 8))
-        ax = fig.add_subplot(111, projection='3d')  
-        # Scatter plot in 3D
-        scatter = ax.scatter(
-            umap_embedding[:, 0],  
-            umap_embedding[:, 1],  
-            umap_embedding[:, 2],  
-            c=labels,       
-            cmap='viridis',       
-            s=30                   
-        )
-        # Add labels and title
-        ax.set_xlabel('UMAP Dimension 1')
-        ax.set_ylabel('UMAP Dimension 2')
-        ax.set_zlabel('UMAP Dimension 3')
-        plt.title(f'3D UMAP of K-Means Clusters on All Feature Types {feature}')
-        # Add a color bar for better visual distinction of clusters
-        plt.colorbar(scatter)
-        # Show the plot
-        plt.show()
-
-    def plot_elbow_method(self, k_range=(2, 10)):
-        """
-        Plot the Elbow Method for choosing the optimal number of clusters
-        Args:
-        - k_range: tuple, range of cluster numbers to evaluate
-        """
-        inertia = []
-        K = range(k_range[0], k_range[1] + 1)
-        for k in K:
-            kmeans = KMeans(n_clusters=k, random_state=42)
-            kmeans.fit(self.data)
-            inertia.append(kmeans.inertia_)  # Sum of squared distances to closest cluster center
-
-        plt.figure(figsize=(8, 6))
-        plt.plot(K, inertia, 'bo-', markersize=8)
-        plt.title('Elbow Method for Optimal K')
-        plt.xlabel('Number of clusters')
-        plt.ylabel('Inertia (Sum of squared distances)')
-        plt.grid(True)
-        plt.show()
-
-    def output_label(self):
-        return self.kmeans_model.labels_
-
-    def silhoutte(self):
-        score = silhouette_score(self.data, self.kmeans_model.labels_)
-        return score
-
-    def calinski(self):
-        if len(np.unique(self.kmeans_model.labels_)) > 1:  # Only calculate if there are clusters
-            score = calinski_harabasz_score(self.data, self.kmeans_model.labels_)
-        else:
-            score = np.nan  # If only one cluster (or all noise), set to NaN
-        return score
-
-class DBSCANClustering:
-    def __init__(self, data):
-        self.data = data
-        self.best_params = None
-        self.dbscan_model = None
-
-    def tune_hyperparameters(self, n_trials=50):
-        def objective_dbscan(trial):
-            eps = trial.suggest_float('eps', 0.1, 2.0)
-            min_samples = trial.suggest_int('min_samples', 3, 20)
-
-            dbscan = DBSCAN(eps=eps, min_samples=min_samples)
-            dbscan.fit(self.data)
-            labels = dbscan.labels_
-            if len(set(labels)) > 1:
-                score = silhouette_score(self.data, labels)
-            else:
-                score = -1
-            return score
-
-        study = optuna.create_study(direction="maximize")
-        study.optimize(objective_dbscan, n_trials=n_trials)
-        self.best_params = study.best_params
-        print("Best params:", self.best_params)
-
-    def fit_model(self):
-        self.dbscan_model = DBSCAN(eps=self.best_params['eps'], min_samples=self.best_params['min_samples'])
-        self.dbscan_model.fit(self.data)
-
-    def visualize_clusters_and_outliers_3D(self, umap_embedding, feature):
-        labels = self.dbscan_model.labels_
-
-        # Separate clustered points and noise points
-        clustered_points = umap_embedding[labels >= 0]  # Points part of a cluster
-        clustered_labels = labels[labels >= 0]
-        outliers = umap_embedding[labels == -1]  # Noise points
-
-        # Create a 3D plot
-        fig = plt.figure(figsize=(10, 7))
-        ax = fig.add_subplot(111, projection='3d')
-
-        # Plot the clustered points in different colors
-        scatter = ax.scatter(clustered_points[:, 0], clustered_points[:, 1], clustered_points[:, 2], 
-                             c=clustered_labels, cmap='viridis', s=30)
-
-        # Plot the outliers (noise points) in red with 'x' markers
-        ax.scatter(outliers[:, 0], outliers[:, 1], outliers[:, 2], c='red', marker='x', s=80, label='Outliers')
-
-        # Add labels and title
-        ax.set_xlabel('UMAP Dimension 1')
-        ax.set_ylabel('UMAP Dimension 2')
-        ax.set_zlabel('UMAP Dimension 3')
-        ax.set_title(f'DBSCAN 3D Clusters with Outliers {feature}')
-        # Add a legend and color bar for clusters
-        plt.legend()
-        plt.colorbar(scatter, ax=ax)
-        plt.show()
-
-    def output_label(self):
-        return self.dbscan_model.labels_
-
-    def silhoutte(self):
-        score = silhouette_score(self.data, self.dbscan_model.labels_)
-        return score
-
-    def calinski(self):
-        if len(np.unique(self.dbscan_model.labels_)) > 1:  # Only calculate if there are clusters
-            score = calinski_harabasz_score(self.data, self.dbscan_model.labels_)
-        else:
-            score = np.nan  # If only one cluster (or all noise), set to NaN
-        return score
-
-# class HDBSCANClustering:
-#     def __init__(self, data):
-#         self.data = data
-#         self.best_params = None
-#         self.hdbscan_model = None
-
-#     def tune_hyperparameters(self, n_trials=50):
-#         def objective_hdbscan(trial):
-#             min_cluster_size = trial.suggest_int('min_cluster_size', 5, 50)
-#             min_samples = trial.suggest_int('min_samples', 3, 20)
-
-#             hdbscan_model = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, min_samples=min_samples)
-#             hdbscan_model.fit(self.data)
-#             labels = hdbscan_model.labels_
-#             if len(set(labels)) > 1:
-#                 score = silhouette_score(self.data, labels)
-#             else:
-#                 score = -1
-#             return score
-
-#         study = optuna.create_study(direction="maximize")
-#         study.optimize(objective_hdbscan, n_trials=n_trials)
-#         self.best_params = study.best_params
-#         print("Best params:", self.best_params)
-
-#     def fit_model(self):
-#         self.hdbscan_model = hdbscan.HDBSCAN(min_cluster_size=self.best_params['min_cluster_size'],
-#                                              min_samples=self.best_params['min_samples'])
-#         self.hdbscan_model.fit(self.data)
-
-#     def visualize_clusters_and_outliers_3D(self, umap_embedding, feature):
-#         labels = self.hdbscan_model.labels_
-
-#         # Separate clustered points and noise points
-#         clustered_points = umap_embedding[labels >= 0]  # Points part of a cluster
-#         clustered_labels = labels[labels >= 0]
-#         outliers = umap_embedding[labels == -1]  # Noise points
-
-#         # Create a 3D plot
-#         fig = plt.figure(figsize=(10, 7))
-#         ax = fig.add_subplot(111, projection='3d')
-
-#         # Plot the clustered points in different colors
-#         scatter = ax.scatter(clustered_points[:, 0], clustered_points[:, 1], clustered_points[:, 2], 
-#                              c=clustered_labels, cmap='viridis', s=30)
-
-#         # Plot the outliers (noise points) in red with 'x' markers
-#         ax.scatter(outliers[:, 0], outliers[:, 1], outliers[:, 2], c='red', marker='x', s=80, label='Outliers')
-
-#         # Add labels and title
-#         ax.set_xlabel('UMAP Dimension 1')
-#         ax.set_ylabel('UMAP Dimension 2')
-#         ax.set_zlabel('UMAP Dimension 3')
-#         ax.set_title(f'HDBSCAN 3D Clusters with Outliers {feature}')
-#         # Add a legend and color bar for clusters
-#         plt.legend()
-#         plt.colorbar(scatter, ax=ax)
-#         plt.show()
-
-#     def output_label(self):
-#         return self.hdbscan_model.labels_
-
-#     def silhoutte(self):
-#         score = silhouette_score(self.data, self.hdbscan_model.labels_)
-#         return score
-
-#     def calinski(self):
-#         if len(np.unique(self.hdbscan_model.labels_)) > 1:  # Only calculate if there are clusters
-#             score = calinski_harabasz_score(self.data, self.hdbscan_model.labels_)
-#         else:
-#             score = np.nan  # If only one cluster (or all noise), set to NaN
-#         return score
-
-
-class ClusteringDataRetriever:
-    def __init__(self, data, labels):
-        self.data = data
-        self.labels = labels
-
-    def get_data_with_labels(self):
-        # If the data is in a numpy array, convert it to a pandas DataFrame
-        if isinstance(self.data, np.ndarray):
-            df = pd.DataFrame(self.data)
-        else:
-            df = self.data.copy()  # If already a DataFrame
-
-        # Add a new column for the cluster labels
-        df['Cluster_Label'] = self.labels
-
-        return df[['gender', 'gender:confidence', 'Cluster_Label']]
-
-    def get_cluster_data(self, cluster_label):
-        #Retrieve data points belonging to a specific cluster.
-        df = self.get_data_with_labels()
-        return df[df['Cluster_Label'] == cluster_label]
-
-    def get_noise_data(self):
-        #Retrieve the data points classified as noise (-1 label) in DBSCAN.
-        return self.get_cluster_data(-1)
-
 
 """Experiment 1: Using all selected features"""
 
@@ -912,44 +884,6 @@ db_retriever.get_noise_data()
 #Metric functions
 model_names = ['KMeans', 'DBSCAN']
 
-def plot_silhouette_bar_across_experiments(model_names, silhouette_scores):
-    n_experiments = len(silhouette_scores)
-    n_models = len(model_names)
-    bar_width = 0.2
-    index = np.arange(n_experiments)
-    plt.figure(figsize=(12, 6))
-
-    for i, model_name in enumerate(model_names):
-        sil_scores = [exp_scores[i] for exp_scores in silhouette_scores]
-        plt.bar(index + i * bar_width,sil_scores, bar_width, label=model_name)
-
-    plt.xlabel('Experiments')
-    plt.ylabel('Silhouette scores')
-    plt.title('Silhouette scores Across Models and Experiments')
-    plt.xticks(index + bar_width * (n_models - 1) / 2, [f'Experiment {i+1}' for i in range(n_experiments)])
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
-
-def visualize_ch_index_across_experiments(model_names, ch_scores):
-
-    n_experiments = len(ch_scores)
-    n_models = len(model_names)
-    bar_width = 0.2
-    index = np.arange(n_experiments)
-    plt.figure(figsize=(12, 6))
-
-    for i, model_name in enumerate(model_names):
-        ch_score = [exp_scores[i] for exp_scores in ch_scores]
-        plt.bar(index + i * bar_width, ch_score, bar_width, label=model_name)
-
-    plt.xlabel('Experiments')
-    plt.ylabel('Calinski-Harabasz Index')
-    plt.title('Calinski-Harabasz Index Across Models and Experiments')
-    plt.xticks(index + bar_width * (n_models - 1) / 2, [f'Experiment {i+1}' for i in range(n_experiments)])
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
 sil_scores = [sil_ex1, sil_ex2, sil_ex3]
 cal_scores = [cal_ex1, cal_ex2, cal_ex3]
 
