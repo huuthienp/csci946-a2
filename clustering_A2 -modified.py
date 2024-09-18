@@ -44,12 +44,14 @@ def find_columns_with_missing(data, columns):
     i = 0
     for col in columns:
         missing.append(data[col].isnull().sum())
-        print(f'Column {col} is missing {missing[i]} values.')
-        print(f'Proportion of missing data is {missing[i]/len(data)}.')
-        if missing[i]/len(data) >= 0.9:
-            print(f'Dropping column {col}...')
-            data = data.drop(columns=col)
-            data_cleaned = data
+        if missing[i] > 0:
+            print()
+            print(f'Column {col} is missing {missing[i]} values.')
+            print(f'Proportion of missing data is {missing[i]/len(data)}.')
+            if missing[i]/len(data) >= 0.9:
+                print(f'Dropping column {col}...')
+                data = data.drop(columns=col)
+                data_cleaned = data
         i += 1
     return missing, data_cleaned
 
@@ -68,7 +70,7 @@ def preprocess_text(text):
     text = text.lower()
     # Remove punctuation and special characters
     text = text.translate(str.maketrans('', '', string.punctuation))  # Removes punctuation
-    text = re.sub(r'[^A-Za-z\s]', '', text)  
+    text = re.sub(r'[^A-Za-z\s]', '', text)
     # Tokenize the text
     tokens = word_tokenize(text)
     # Remove stopwords
@@ -93,7 +95,7 @@ def plot_silhouette_bar_across_experiments(model_names, silhouette_scores):
     plt.xlabel('Experiments')
     plt.ylabel('Silhouette scores')
     plt.title('Silhouette scores Across Models and Experiments')
-    plt.xticks(index + bar_width * (n_models - 1) / 2, [f'Experiment {i+1}' for i in range(n_experiments)])
+    plt.xticks(index + bar_width * (n_models - 1) / 2, [f'Exp {i+1}' for i in range(n_experiments)])
     plt.legend()
     plt.tight_layout()
     plt.show()
@@ -114,7 +116,7 @@ def visualize_ch_index_across_experiments(model_names, ch_scores):
     plt.xlabel('Experiments')
     plt.ylabel('Calinski-Harabasz Index')
     plt.title('Calinski-Harabasz Index Across Models and Experiments')
-    plt.xticks(index + bar_width * (n_models - 1) / 2, [f'Experiment {i+1}' for i in range(n_experiments)])
+    plt.xticks(index + bar_width * (n_models - 1) / 2, [f'Exp {i+1}' for i in range(n_experiments)])
     plt.legend()
     plt.tight_layout()
     plt.show()
@@ -151,15 +153,15 @@ class KMeansClustering:
     def visualize_clusters(self, umap_embedding, feature):
         labels = self.kmeans_model.labels_
         fig = plt.figure(figsize=(10, 8))
-        ax = fig.add_subplot(111, projection='3d')  
+        ax = fig.add_subplot(111, projection='3d')
         # Scatter plot in 3D
         scatter = ax.scatter(
-            umap_embedding[:, 0],  
-            umap_embedding[:, 1],  
-            umap_embedding[:, 2],  
-            c=labels,       
-            cmap='viridis',       
-            s=30                   
+            umap_embedding[:, 0],
+            umap_embedding[:, 1],
+            umap_embedding[:, 2],
+            c=labels,
+            cmap='viridis',
+            s=30
         )
         # Add labels and title
         ax.set_xlabel('UMAP Dimension 1')
@@ -249,7 +251,7 @@ class DBSCANClustering:
         ax = fig.add_subplot(111, projection='3d')
 
         # Plot the clustered points in different colors
-        scatter = ax.scatter(clustered_points[:, 0], clustered_points[:, 1], clustered_points[:, 2], 
+        scatter = ax.scatter(clustered_points[:, 0], clustered_points[:, 1], clustered_points[:, 2],
                              c=clustered_labels, cmap='viridis', s=30)
 
         # Plot the outliers (noise points) in red with 'x' markers
@@ -286,7 +288,7 @@ class ClusteringDataRetriever:
         self.labels = labels
 
     def get_data_with_labels(self):
-        # If the data is in a numpy array, convert it to a pandas DataFrame
+        # If Data is in a numpy array, convert it to a pandas DataFrame
         if isinstance(self.data, np.ndarray):
             df = pd.DataFrame(self.data)
         else:
@@ -303,7 +305,7 @@ class ClusteringDataRetriever:
         return df[df['Cluster_Label'] == cluster_label]
 
     def get_noise_data(self):
-        # Retrieve the data points classified as noise (-1 label) in DBSCAN.
+        # Retrieve Data points classified as noise (-1 label) in DBSCAN.
         return self.get_cluster_data(-1)
 
 
@@ -313,14 +315,13 @@ df = pd.read_csv('twitter_user_data.csv', encoding='ISO-8859-1')
 
 # Quick view of the dataset
 print()
-print('Dataset Info and Overview')
+print('Dataset Overview')
 print(df.info())
 print(df.head())
 
 all_features = df.columns
 
 missing_col, df_cleaned = find_columns_with_missing(df, all_features)
-missing_col
 
 # Dropping rows where 'gender' is missing
 df_cleaned = df_cleaned.dropna(subset=['gender'])
@@ -330,7 +331,7 @@ df_cleaned = df_cleaned.drop(columns=['profile_yn'])
 
 # Now that we have handled the missing data, you can proceed with further analysis
 print()
-print('Dataset Info and Overview after CLEANING')
+print('Dataset Overview')
 print(df_cleaned.info())
 print(df_cleaned.head())
 
@@ -375,7 +376,7 @@ df_cleaned['tweet_created_year'] = pd.to_datetime(df_cleaned['tweet_created']).d
 df_cleaned['created'] = pd.to_datetime(df_cleaned['created'], errors='coerce')
 df_cleaned['tweet_created'] = pd.to_datetime(df_cleaned['tweet_created'], errors='coerce')
 
-# assuming the data was up-to-date
+# assuming Data was up-to-date
 df_cleaned['account_age'] = (pd.Timestamp.now() - df_cleaned['created']).dt.days
 
 df_cleaned['tweets_per_day'] = df_cleaned['tweet_count'] / df_cleaned['account_age']
@@ -437,7 +438,7 @@ top_sidebar_colors = df_cleaned['sidebar_color'].value_counts().iloc[:15].index.
 top_link_colors = df_cleaned['link_color'].value_counts().iloc[:15].index.tolist()
 # print(top_sidebar_colors)
 
-# Extract top 10 most common sidebar colors 
+# Extract top 10 most common sidebar colors
 sns.set(rc={'axes.facecolor':'lightgrey', 'figure.facecolor':'white'})
 plt.figure(figsize=(8, 6))
 sns.countplot(y='sidebar_color', data=df_cleaned, order=df_cleaned['sidebar_color'].value_counts().iloc[:15].index, palette=top_sidebar_colors)
@@ -447,7 +448,7 @@ plt.xlabel('count')
 plt.grid()
 plt.show()
 
-# Extract top 10 most common link colors 
+# Extract top 10 most common link colors
 sns.set(rc={'axes.facecolor':'lightgrey', 'figure.facecolor':'white'})
 plt.figure(figsize=(8, 6))
 sns.countplot(y='link_color', data=df_cleaned, order=df_cleaned['link_color'].value_counts().iloc[:15].index, palette=top_link_colors)
@@ -460,7 +461,7 @@ plt.show()
 # count plot for sidebar_color vs. gender
 plt.figure(figsize=(10, 6))
 sns.set(rc={'axes.facecolor':'white', 'figure.facecolor':'white'})
-sns.countplot(x='sidebar_color', hue='gender', data=df_cleaned, 
+sns.countplot(x='sidebar_color', hue='gender', data=df_cleaned,
               order=df_cleaned['sidebar_color'].value_counts().iloc[:15].index)
 plt.title('Top 15 Most Common Sidebar Colors by Gender')
 plt.xlabel('Sidebar Color')
@@ -470,7 +471,7 @@ plt.show()
 
 # count plot for link_color vs. gender
 plt.figure(figsize=(10, 6))
-sns.countplot(x='link_color', hue='gender', data=df_cleaned, 
+sns.countplot(x='link_color', hue='gender', data=df_cleaned,
               order=df_cleaned['link_color'].value_counts().iloc[:15].index)
 plt.title('Top 15 Most Common link Colors by Gender')
 plt.xlabel('Link Color')
@@ -480,7 +481,7 @@ plt.show()
 
 # Scatter plot for link_color vs. tweet_count with gender as hue
 plt.figure(figsize=(10, 6))
-sns.scatterplot(x='link_color', y='tweet_count', hue='gender', data=df_cleaned[df_cleaned['link_color'].isin(top_link_colors)], 
+sns.scatterplot(x='link_color', y='tweet_count', hue='gender', data=df_cleaned[df_cleaned['link_color'].isin(top_link_colors)],
                 palette='Set2', s=100, alpha=0.7)
 plt.title('Link Colors vs. Tweet count with Gender')
 plt.xlabel('Link Color')
@@ -490,7 +491,7 @@ plt.show()
 
 # Scatter plot for sidebar_color vs. tweet_count with gender as hue
 plt.figure(figsize=(10, 6))
-sns.scatterplot(x='sidebar_color', y='tweet_count', hue='gender', data=df_cleaned[df_cleaned['sidebar_color'].isin(top_sidebar_colors)], 
+sns.scatterplot(x='sidebar_color', y='tweet_count', hue='gender', data=df_cleaned[df_cleaned['sidebar_color'].isin(top_sidebar_colors)],
                 palette='Set2', s=100, alpha=0.7)
 plt.title('Sidebar Colors vs. Tweet count with Gender')
 plt.xlabel('Sidebar Color')
@@ -539,7 +540,7 @@ df_preprocessed['gender'] = df_preprocessed['gender'].replace({'male': 0, 'femal
 
 # Check for unique values in the 'gender' column after replacement
 print()
-print("Unique Values in 'gender' After Transforming")
+print("Unique Values in 'gender'")
 print(df_preprocessed['gender'].unique())
 print(df_preprocessed.info())
 
@@ -577,10 +578,11 @@ numerical_features = df_preprocessed.select_dtypes(include=[np.number])
 # print(f'All current numerical features are {numerical_features.columns.tolist()}')
 
 print()
-print('Dataset Info After Preprocessing')
+print('Dataset Overview After PreProcessing')
 print(df_preprocessed.info())
 
-# NLP Processing
+print()
+print('---- NLP Processing ----')
 nltk.download('stopwords')
 nltk.download('punkt')
 nltk.download('punkt_tab')
@@ -616,6 +618,8 @@ print(df_preprocessed[['description', 'cleaned_description', 'text', 'cleaned_te
 df_preprocessed = df_preprocessed.drop(columns=['description','text'])
 
 # Initialize TFIDF vectorizer for text features
+print()
+print('Applying TF-IDF Vectorisation...')
 tfidf_vectorizer = TfidfVectorizer(max_features=1500, stop_words='english')
 
 # Apply TF-IDF on 'description', 'text', 'name' columns
@@ -642,10 +646,10 @@ df_preprocessed = pd.concat([df_preprocessed, rgb_df], axis=1)
 df_cate = df_preprocessed[['tweet_location_encoded', 'user_timezone_encoded']].copy()
 
 print()
-print('CLUSTERING MODELS')
+print('---- CLUSTERING MODELS ----')
 
 print()
-print('Experiment 1: Using all selected features')
+print('Exp 1: Using All Selected Features')
 
 sil_ex1 = []
 cal_ex1 = []
@@ -670,7 +674,7 @@ df_ex1 = df_finalised.drop(columns=['gender', 'gender:confidence'])
 
 # Check the preprocessed dataset in the present
 print()
-print('Dataset Info Before Experiment 1')
+print('Dataset for Exp 1')
 print(df_ex1.info())
 
 # Apply UMAP for dimensionality reduction
@@ -678,15 +682,17 @@ umap_model = umap.UMAP()
 umap_vis = umap.UMAP(n_neighbors=30,min_dist=0.1, n_components=3, random_state=42)
 umap_embedding = umap_model.fit_transform(df_ex1)
 umap_plot = umap_vis.fit_transform(df_ex1)
-print(umap_embedding.shape) 
+print(umap_embedding.shape)
 
-# K-Means Clustering 
+# K-Means Clustering
+print()
+print('Performing K-Means Clustering...')
 kmeans_clustering = KMeansClustering(umap_embedding)
-kmeans_clustering.tune_hyperparameters()  
-kmeans_exp1 = kmeans_clustering.fit_model()  
-kmeans_clustering.visualize_clusters(umap_plot, 'All feature types')  
-kmeans_clustering.plot_elbow_method()  
-k_labels = kmeans_clustering.output_label()  
+kmeans_clustering.tune_hyperparameters()
+kmeans_exp1 = kmeans_clustering.fit_model()
+kmeans_clustering.visualize_clusters(umap_plot, 'All feature types')
+kmeans_clustering.plot_elbow_method()
+k_labels = kmeans_clustering.output_label()
 sil_ex1.append(kmeans_clustering.silhoutte())
 cal_ex1.append(kmeans_clustering.calinski())
 
@@ -694,21 +700,23 @@ k_retriever = ClusteringDataRetriever(data_exp1, k_labels)
 df_with_labels = k_retriever.get_data_with_labels()
 
 print()
-print('Dataset with Labels from KMeans in Experiment 1')
+print('Dataset with Labels from KMeans in Exp 1')
 print(df_with_labels.head())
 for label in np.unique(k_labels):
-    print(f'The data points that belong to cluster {label} from KMeans in experiment 1')
+    print(f'Data points that belong to cluster {label} from KMeans in Exp 1')
     print(k_retriever.get_cluster_data(label))
-    print(f'The number of data with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-    print(f'The number of data with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-    print(f'The number of data with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+    print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+    print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+    print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
 
-# DBSCAN Clustering 
+# DBSCAN Clustering
+print()
+print('Performing DBSCAN Clustering...')
 dbscan_clustering = DBSCANClustering(umap_embedding)
-dbscan_clustering.tune_hyperparameters()  
-dbscan_exp1 = dbscan_clustering.fit_model()  
-dbscan_clustering.visualize_clusters_and_outliers_3D(umap_plot, 'All feature types') 
-db_labels = dbscan_clustering.output_label() 
+dbscan_clustering.tune_hyperparameters()
+dbscan_exp1 = dbscan_clustering.fit_model()
+dbscan_clustering.visualize_clusters_and_outliers_3D(umap_plot, 'All feature types')
+db_labels = dbscan_clustering.output_label()
 sil_ex1.append(dbscan_clustering.silhoutte())
 cal_ex1.append(dbscan_clustering.calinski())
 
@@ -716,20 +724,20 @@ cal_ex1.append(dbscan_clustering.calinski())
 db_retriever = ClusteringDataRetriever(data_exp1, db_labels)
 df_with_labels = db_retriever.get_data_with_labels()
 print()
-print('The dataset with labels from DBSCAN in experiment 1')
+print('Dataset with Labels from DBSCAN in Exp 1')
 print(df_with_labels.head())
 for label in np.unique(db_labels):
     if label != -1:
-        print(f'The data points that belong to cluster {label} from DBSCAN in experiment 1')
+        print(f'Data points that belong to cluster {label} from DBSCAN in Exp 1')
         print(db_retriever.get_cluster_data(label))
-        print(f'The number of data with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-        print(f'The number of data with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-        print(f'The number of data with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-print('the data points classified as noise')
+        print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+        print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+        print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+print('Data points classified as noise')
 db_retriever.get_noise_data()
 
 print()
-print('Experiment 2: Using only numerical and categorical features')
+print('Exp 2: Using Only Numerical and Categorical Features')
 
 sil_ex2 = []
 cal_ex2 = []
@@ -750,41 +758,46 @@ df_no_text_wg = df_no_text.copy()
 # Drop gender feature before clustering
 data_exp2 = df_no_text.drop(columns=['gender', 'gender:confidence'])
 
-# Check the number of data after drop NaN values
+# Check No. of records after drop NaN values
 print()
-print("Dataset for Experiment 2")
+print("Dataset for Exp 2")
 print(data_exp2.head())
 print(data_exp2.info())
 
 # Apply UMAP for dimensionality reduction
+print('Applying UMAP for dim reduction...')
 umap_model = umap.UMAP(n_neighbors=30,min_dist=0.1, n_components=3, random_state=42)
 umap_embedding = umap_model.fit_transform(data_exp2)
-print(umap_embedding.shape) 
+print(umap_embedding.shape)
 # umap_embedding = umap_embedding.astype(np.float32)
 
-# K-Means Clustering 
+# K-Means Clustering
+print()
+print('Performing K-Means Clustering...')
 kmeans_clustering = KMeansClustering(data_exp2)
-kmeans_clustering.tune_hyperparameters()  
-kmeans_exp2 = kmeans_clustering.fit_model()  
+kmeans_clustering.tune_hyperparameters()
+kmeans_exp2 = kmeans_clustering.fit_model()
 kmeans_clustering.visualize_clusters(umap_embedding, 'Numerical and categorical features')  # Visualize clusters
 kmeans_clustering.plot_elbow_method()
-k_labels = kmeans_clustering.output_label()  
+k_labels = kmeans_clustering.output_label()
 sil_ex2.append(kmeans_clustering.silhoutte())
 cal_ex2.append(kmeans_clustering.calinski())
 
 k_retriever = ClusteringDataRetriever(df_no_text_wg, k_labels)
 df_with_labels = k_retriever.get_data_with_labels()
 print()
-print('The Dataset with Labels from KMeans in Experiment 2')
-print(df_with_labels.head())  
+print('Dataset with Labels from KMeans in Exp 2')
+print(df_with_labels.head())
 for label in np.unique(k_labels):
-    print(f'The data points that belong to cluster {label} from KMeans in experiment 2')
+    print(f'Data points that belong to cluster {label} from KMeans in Exp 2')
     print(k_retriever.get_cluster_data(label))
-    print(f'The number of data with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-    print(f'The number of data with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-    print(f'The number of data with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+    print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+    print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+    print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
 
-# DBSCAN Clustering 
+# DBSCAN Clustering
+print()
+print('Performing DBSCAN Clustering...')
 dbscan_clustering = DBSCANClustering(data_exp2)
 dbscan_clustering.tune_hyperparameters()  # Tune DBSCAN hyperparameters
 dbscan_exp2 = dbscan_clustering.fit_model()  # Fit the DBSCAN model
@@ -797,20 +810,20 @@ cal_ex2.append(dbscan_clustering.calinski())
 db_retriever = ClusteringDataRetriever(df_no_text_wg, db_labels)
 df_with_labels = db_retriever.get_data_with_labels()
 print()
-print('The Dataset with Labels from DBSCAN in Experiment 2')
-print(df_with_labels.head())  
+print('Dataset with Labels from DBSCAN in Exp 2')
+print(df_with_labels.head())
 for label in np.unique(db_labels):
     if label != -1:
-        print(f'The data points that belong to cluster {label} from DBSCAN in experiment 2')
+        print(f'Data points that belong to cluster {label} from DBSCAN in Exp 2')
         print(db_retriever.get_cluster_data(label))
-        print(f'The number of data with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-        print(f'The number of data with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-        print(f'The number of data with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-print('the data points classified as noise')
+        print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+        print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+        print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+print('Data points classified as noise')
 db_retriever.get_noise_data()
 
 print()
-print('Experiment 3: Using Only Text Features')
+print('Exp 3: Using Only Text Features')
 
 sil_ex3 = []
 cal_ex3 = []
@@ -829,7 +842,7 @@ data_exp3 = df_with_text_wg.drop(columns=['gender', 'gender:confidence'])
 
 # Drop the gender features before clustering
 
-print('Dataset for Experiment 3')
+print('Dataset for Exp 3')
 print(data_exp3.info())
 print(data_exp3.head())
 
@@ -837,12 +850,14 @@ umap_model = umap.UMAP()
 umap_embedding_t = umap_model.fit_transform(data_exp3)
 umap_embedding = umap.UMAP(n_neighbors=30,min_dist=0.1, n_components=3, random_state=42).fit_transform(data_exp3)
 
-# K-Means Clustering 
+# K-Means Clustering
+print()
+print('Performing K-Means Clustering...')
 kmeans_clustering = KMeansClustering(umap_embedding_t)
-kmeans_clustering.tune_hyperparameters()  
-kmeans_exp3 = kmeans_clustering.fit_model()  
-kmeans_clustering.visualize_clusters(umap_embedding, 'Text features')  
-kmeans_clustering.plot_elbow_method() 
+kmeans_clustering.tune_hyperparameters()
+kmeans_exp3 = kmeans_clustering.fit_model()
+kmeans_clustering.visualize_clusters(umap_embedding, 'Text features')
+kmeans_clustering.plot_elbow_method()
 k_labels = kmeans_clustering.output_label()
 sil_ex3.append(kmeans_clustering.silhoutte())
 cal_ex3.append(kmeans_clustering.calinski())
@@ -850,41 +865,43 @@ cal_ex3.append(kmeans_clustering.calinski())
 k_retriever = ClusteringDataRetriever(df_with_text_wg, k_labels)
 df_with_labels = k_retriever.get_data_with_labels()
 print()
-print('Dataset with Labels from KMeans in Experiment 3')
-print(df_with_labels.head()) 
+print('Dataset with Labels from KMeans in Exp 3')
+print(df_with_labels.head())
 for label in np.unique(k_labels):
-    print(f'The data points that belong to cluster {label} from KMeans in experiment 3')
+    print(f'Data points that belong to cluster {label} from KMeans in Exp 3')
     print(k_retriever.get_cluster_data(label))
-    print(f'The number of data with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-    print(f'The number of data with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-    print(f'The number of data with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+    print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+    print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+    print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
 
-# DBSCANClustering 
+# DBSCANClustering
+print()
+print('Performing DBSCAN Clustering...')
 dbscan_clustering = DBSCANClustering(umap_embedding_t)
-dbscan_clustering.tune_hyperparameters()  
-dbscan_exp3 = dbscan_clustering.fit_model()  
-dbscan_clustering.visualize_clusters_and_outliers_3D(umap_embedding, 'Text features')  
-db_labels = dbscan_clustering.output_label()  
+dbscan_clustering.tune_hyperparameters()
+dbscan_exp3 = dbscan_clustering.fit_model()
+dbscan_clustering.visualize_clusters_and_outliers_3D(umap_embedding, 'Text features')
+db_labels = dbscan_clustering.output_label()
 sil_ex3.append(dbscan_clustering.silhoutte())
 cal_ex3.append(dbscan_clustering.calinski())
 
 db_retriever = ClusteringDataRetriever(df_with_text_wg, db_labels)
 df_with_labels = db_retriever.get_data_with_labels()
 print()
-print('Dataset with Labels from DBSCAN in Experiment 3')
-print(df_with_labels.head()) 
+print('Dataset with Labels from DBSCAN in Exp 3')
+print(df_with_labels.head())
 for label in np.unique(db_labels):
     if label != -1:
-        print(f'The data points that belong to cluster {label} from DBSCAN in experiment 2')
+        print(f'Data points that belong to cluster {label} from DBSCAN in Exp 2')
         print(db_retriever.get_cluster_data(label))
-        print(f'The number of data with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-        print(f'The number of data with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-        print(f'The number of data with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-print('the data points classified as noise')
+        print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+        print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+        print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+print('Data points classified as noise')
 db_retriever.get_noise_data()
 
 print()
-print('VISUALIZE THE METRIC EVALUATION')
+print('---- VISUALIZE THE METRIC EVALUATION ----')
 
 # Metric functions
 model_names = ['KMeans', 'DBSCAN']
