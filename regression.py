@@ -397,8 +397,6 @@ df_preprocessed = df_preprocessed.drop(columns=['cleaned_description', 'cleaned_
 
 df_preprocessed = pd.concat([df_preprocessed, rgb_df], axis=1)
 
-df_preprocessed = pd.concat([df_preprocessed, rgb_df], axis=1)
-
 print(df_preprocessed.head())
 
 #================================================REGRSSION CODE============================
