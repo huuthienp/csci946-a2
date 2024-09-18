@@ -38,14 +38,16 @@ except ImportError:
 
 def find_columns_with_missing(data, columns):
     """Finding features that have a lot of missing data"""
+    print()
+    print('Finding columns with missing data...')
     missing = []
     i = 0
     for col in columns:
         missing.append(data[col].isnull().sum())
-        print(f'the {col} has {missing[i]} data missing')
-        print(f'the proportion of missing data to the total is {missing[i]/len(data)}')
+        print(f'Column {col} is missing {missing[i]} values.')
+        print(f'Proportion of missing data is {missing[i]/len(data)}.')
         if missing[i]/len(data) >= 0.9:
-            print(f'The feature to be dropped is {col}')
+            print(f'Dropping column {col}...')
             data = data.drop(columns=col)
             data_cleaned = data
         i += 1
@@ -228,7 +230,7 @@ class DBSCANClustering:
         study = optuna.create_study(direction="maximize")
         study.optimize(objective_dbscan, n_trials=n_trials)
         self.best_params = study.best_params
-        print("Best params:", self.best_params)
+        print("Found best params:", self.best_params)
 
     def fit_model(self):
         self.dbscan_model = DBSCAN(eps=self.best_params['eps'], min_samples=self.best_params['min_samples'])
@@ -310,19 +312,15 @@ class ClusteringDataRetriever:
 df = pd.read_csv('twitter_user_data.csv', encoding='ISO-8859-1')
 
 # Quick view of the dataset
-print('The information of the dataset')
+print()
+print('Dataset Info and Overview')
 print(df.info())
-print('The first few rows of the dataset')
 print(df.head())
 
 all_features = df.columns
 
 missing_col, df_cleaned = find_columns_with_missing(df, all_features)
 missing_col
-print('The information of the cleaned dataset')
-print(df_cleaned.info())
-print('The first few rows of the cleaned dataset')
-print(df_cleaned.head())
 
 # Dropping rows where 'gender' is missing
 df_cleaned = df_cleaned.dropna(subset=['gender'])
@@ -331,13 +329,13 @@ df_cleaned = df_cleaned.dropna(subset=['gender'])
 df_cleaned = df_cleaned.drop(columns=['profile_yn'])
 
 # Now that we have handled the missing data, you can proceed with further analysis
-print('The information of the cleaned dataset')
+print()
+print('Dataset Info and Overview after CLEANING')
 print(df_cleaned.info())
-print('The first few rows of the cleaned dataset')
 print(df_cleaned.head())
 
 print()
-print('EXPLORATORY DATA ANALYSIS (EDA)')
+print('---- EXPLORATORY DATA ANALYSIS (EDA) ----')
 
 current_num_features = df.select_dtypes(include=[np.number])
 
@@ -414,14 +412,15 @@ plt.show()
 link_color_nan_count = df_cleaned['link_color'].isnull().sum()
 sidebar_color_nan_count = df_cleaned['sidebar_color'].isnull().sum()
 
-print(f"Number of NaN values in 'link_color': {link_color_nan_count}")
-print(f"Number of NaN values in 'sidebar_color': {sidebar_color_nan_count}")
+print()
+print(f"Number of NaN values in 'link_color': {link_color_nan_count}.")
+print(f"Number of NaN values in 'sidebar_color': {sidebar_color_nan_count}.")
 
 # Check how many available colors in 'link_color' and 'sidebar_color' features
 link_color_count = len(df_cleaned['link_color'].unique())
 sidebar_color_count = len(df_cleaned['sidebar_color'].unique())
-print(f'the number of link color is {link_color_count}')
-print(f'the number of side bar color is {sidebar_color_count}')
+print(f'Number of link color is {link_color_count}.')
+print(f'Number of side bar color is {sidebar_color_count}.')
 
 # Apply the function to 'link_color' and 'sidebar_color'
 df_cleaned['link_color'] = df_cleaned['link_color'].apply(lambda x: f'#{x}' if len(x) == 6 else '#000000')
@@ -539,6 +538,8 @@ df_preprocessed['user_timezone_encoded'] = df_preprocessed['user_timezone'].map(
 df_preprocessed['gender'] = df_preprocessed['gender'].replace({'male': 0, 'female': 1, 'brand': 2})
 
 # Check for unique values in the 'gender' column after replacement
+print()
+print("Unique Values in 'gender' After Transforming")
 print(df_preprocessed['gender'].unique())
 print(df_preprocessed.info())
 
@@ -567,13 +568,16 @@ rgb_df = pd.concat([rgb_df, pd.DataFrame(df_preprocessed['sidebar_color_rgb'].to
 df_preprocessed = df_preprocessed.drop(columns=['link_color', 'sidebar_color', 'link_color_rgb', 'sidebar_color_rgb'])
 
 # Check if all required features are there
-print(f'All features that will be used are {df_preprocessed.columns.tolist()}')
+print()
+print('All Remaining Features')
+print(df_preprocessed.columns.tolist())
 
 # Define the numerical features to scale (filtering for int64 and float64 columns)
 numerical_features = df_preprocessed.select_dtypes(include=[np.number])
 # print(f'All current numerical features are {numerical_features.columns.tolist()}')
 
-print('After all, here is the information of the dataset')
+print()
+print('Dataset Info After Preprocessing')
 print(df_preprocessed.info())
 
 # NLP Processing
@@ -593,8 +597,8 @@ df_preprocessed['text'].fillna('', inplace=True)
 # df_preprocessed['name'].fillna('', inplace=True)
 
 # Check the text features if they still contain NaN
+print()
 print(df_preprocessed.select_dtypes(include=[object]))
-
 
 # Define stopwords and lemmatizer
 stop_words = set(stopwords.words('english'))
@@ -610,11 +614,6 @@ print(df_preprocessed[['description', 'cleaned_description', 'text', 'cleaned_te
 
 # Drop the original text features
 df_preprocessed = df_preprocessed.drop(columns=['description','text'])
-
-# Check the preprocessed dataset in the present
-print('The current information of pre-processed dataset before text preprocessing')
-print(df_preprocessed.info())
-
 
 # Initialize TFIDF vectorizer for text features
 tfidf_vectorizer = TfidfVectorizer(max_features=1500, stop_words='english')
@@ -670,7 +669,8 @@ df_ex1 = df_finalised.drop(columns=['gender', 'gender:confidence'])
 
 
 # Check the preprocessed dataset in the present
-print('The current information of pre-processed dataset after all pre-processing')
+print()
+print('Dataset Info Before Experiment 1')
 print(df_ex1.info())
 
 # Apply UMAP for dimensionality reduction
@@ -692,7 +692,9 @@ cal_ex1.append(kmeans_clustering.calinski())
 
 k_retriever = ClusteringDataRetriever(data_exp1, k_labels)
 df_with_labels = k_retriever.get_data_with_labels()
-print('The dataset with labels from KMeans in experiment 1')
+
+print()
+print('Dataset with Labels from KMeans in Experiment 1')
 print(df_with_labels.head())
 for label in np.unique(k_labels):
     print(f'The data points that belong to cluster {label} from KMeans in experiment 1')
@@ -713,6 +715,7 @@ cal_ex1.append(dbscan_clustering.calinski())
 # Initialize the class to retrieve data
 db_retriever = ClusteringDataRetriever(data_exp1, db_labels)
 df_with_labels = db_retriever.get_data_with_labels()
+print()
 print('The dataset with labels from DBSCAN in experiment 1')
 print(df_with_labels.head())
 for label in np.unique(db_labels):
@@ -737,7 +740,7 @@ chunk_size = 100
 for i in range(0, df_num.shape[0], chunk_size):
     df_num.iloc[i:i + chunk_size] = scaler.fit_transform(df_num.iloc[i:i + chunk_size])
 df_no_text = pd.concat([df_num, df_cate, df_gender], axis=1)
-print("Data with only numerical and categorical features:")
+print("Data with Only Numerical and Categorical Features")
 print(df_no_text.head())
 print(df_no_text.info())
 
@@ -748,7 +751,8 @@ df_no_text_wg = df_no_text.copy()
 data_exp2 = df_no_text.drop(columns=['gender', 'gender:confidence'])
 
 # Check the number of data after drop NaN values
-print("Data with only numerical and categorical features after dropping NaN values:")
+print()
+print("Dataset for Experiment 2")
 print(data_exp2.head())
 print(data_exp2.info())
 
@@ -770,7 +774,8 @@ cal_ex2.append(kmeans_clustering.calinski())
 
 k_retriever = ClusteringDataRetriever(df_no_text_wg, k_labels)
 df_with_labels = k_retriever.get_data_with_labels()
-print('The dataset with labels from KMeans in experiment 2')
+print()
+print('The Dataset with Labels from KMeans in Experiment 2')
 print(df_with_labels.head())  
 for label in np.unique(k_labels):
     print(f'The data points that belong to cluster {label} from KMeans in experiment 2')
@@ -791,7 +796,8 @@ cal_ex2.append(dbscan_clustering.calinski())
 
 db_retriever = ClusteringDataRetriever(df_no_text_wg, db_labels)
 df_with_labels = db_retriever.get_data_with_labels()
-print('The dataset with labels from DBSCAN in experiment 2')
+print()
+print('The Dataset with Labels from DBSCAN in Experiment 2')
 print(df_with_labels.head())  
 for label in np.unique(db_labels):
     if label != -1:
@@ -804,7 +810,7 @@ print('the data points classified as noise')
 db_retriever.get_noise_data()
 
 print()
-print('Experiment 3: Using only text features')
+print('Experiment 3: Using Only Text Features')
 
 sil_ex3 = []
 cal_ex3 = []
@@ -816,10 +822,6 @@ chunk_size = 100
 for i in range(0, df_with_text.shape[0], chunk_size):
     df_with_text.iloc[i:i + chunk_size] = scaler.fit_transform(df_with_text.iloc[i:i + chunk_size])
 
-print("Data with only text features:")
-print(df_with_text.head())
-print(df_with_text.info())
-
 df_with_text_wg = pd.concat([df_with_text, df_gender], axis=1)
 # Drop NaN values before clustering
 df_with_text_wg = df_with_text_wg.dropna()
@@ -827,11 +829,9 @@ data_exp3 = df_with_text_wg.drop(columns=['gender', 'gender:confidence'])
 
 # Drop the gender features before clustering
 
-
-# Check the number of data after drop NaN values
-print("Data with only text features after dropping NaN values:")
-print(df_with_text.head())
-print(df_with_text.info())
+print('Dataset for Experiment 3')
+print(data_exp3.info())
+print(data_exp3.head())
 
 umap_model = umap.UMAP()
 umap_embedding_t = umap_model.fit_transform(data_exp3)
@@ -849,7 +849,8 @@ cal_ex3.append(kmeans_clustering.calinski())
 
 k_retriever = ClusteringDataRetriever(df_with_text_wg, k_labels)
 df_with_labels = k_retriever.get_data_with_labels()
-print('The dataset with labels from KMeans in experiment 3')
+print()
+print('Dataset with Labels from KMeans in Experiment 3')
 print(df_with_labels.head()) 
 for label in np.unique(k_labels):
     print(f'The data points that belong to cluster {label} from KMeans in experiment 3')
@@ -869,7 +870,8 @@ cal_ex3.append(dbscan_clustering.calinski())
 
 db_retriever = ClusteringDataRetriever(df_with_text_wg, db_labels)
 df_with_labels = db_retriever.get_data_with_labels()
-print('The dataset with labels from DBSCAN in experiment 3')
+print()
+print('Dataset with Labels from DBSCAN in Experiment 3')
 print(df_with_labels.head()) 
 for label in np.unique(db_labels):
     if label != -1:
