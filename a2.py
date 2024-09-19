@@ -10,6 +10,7 @@ REQS = [
     ('pip', 'pip==24.2'),
     ('lightgbm', 'lightgbm==4.5.0'),
     ('matplotlib', 'matplotlib==3.9.2'),
+    ('mlxtend', 'mlxtend==0.23.1'),
     ('nltk', 'nltk==3.9.1'),
     ('numpy', 'numpy==2.0.2'),
     ('optuna', 'optuna==4.0.0'),
@@ -18,7 +19,7 @@ REQS = [
     ('sklearn', 'scikit-learn==1.5.2'),
     ('statsmodels', 'statsmodels==0.14.3'),
     ('umap-learn', 'umap-learn==0.5.6'),
-    ('xgboost', 'xgboost==2.1.1')
+    ('xgboost', 'xgboost==2.1.1'),
 ]
 
 try:
@@ -84,6 +85,8 @@ import optuna
 # Other machine learning libraries
 import lightgbm as lgb
 from xgboost import XGBClassifier
+from mlxtend.frequent_patterns import apriori
+from mlxtend.frequent_patterns import association_rules
 
 
 def find_columns_with_missing(data, columns):
@@ -984,7 +987,7 @@ visualize_ch_index_across_experiments(model_names, cal_scores)
 # =============================== REGRESSION ======================================
 print()
 print()
-df_preprocessed_reg = df_finalised.copy()
+df_preprocessed_reg = df_preprocessed.copy()
 y = df_preprocessed["gender:confidence"].reset_index(drop=True)
 df_preprocessed_reg = df_preprocessed_reg.drop(['gender', "gender:confidence"], axis=1)
 
@@ -1258,6 +1261,9 @@ scatterplot_mistaken_points(common_df, X_train_lin, "Boosted and Linear Regressi
 
 # ============================== CLASSIFICATION ==============================
 
+print()
+print()
+print('---- CLASSIFICATION ----')
 # Features and target
 X = df_preprocessed.drop(columns=['gender'])  # Assuming 'gender' is the target variable
 y = df_preprocessed['gender']
@@ -1385,4 +1391,67 @@ plt.figure(figsize=(6, 4))
 plt.bar(accuracies.keys(), accuracies.values(), color=['blue', 'green', 'red'])
 plt.title('Model Accuracy Comparison')
 plt.ylabel('Accuracy')
+plt.show()
+
+
+
+
+# ============================== ASSOCIATION RULES ==============================
+print()
+print()
+print('---- ASSOCIATION RULES ----')
+# Binarize numeric columns
+df_preprocessed['high_favorites'] = df_preprocessed['favorites_per_day'] > df_preprocessed['favorites_per_day'].mean()
+df_preprocessed['high_retweets'] = df_preprocessed['retweets_per_day'] > df_preprocessed['retweets_per_day'].mean()
+df_preprocessed['high_tweets'] = df_preprocessed['tweets_per_day'] > df_preprocessed['tweets_per_day'].mean()
+
+# Binarize year columns (profile_created_year and tweet_created_year)
+# Example: Set threshold year as 2015
+df_preprocessed['profile_recent'] = df_preprocessed['profile_created_year'] >= 2015
+df_preprocessed['tweet_recent'] = df_preprocessed['tweet_created_year'] >= 2015
+
+# Select only the binary columns
+df_apriori = df_preprocessed[['high_favorites', 'high_retweets', 'high_tweets',
+                              'profile_recent', 'tweet_recent',
+                              'tweet_location_encoded', 'user_timezone_encoded']]
+
+# Convert all columns to int (0 or 1)
+df_apriori = df_apriori.astype(int)
+
+# Apply Apriori
+frequent_itemsets = apriori(df_apriori, min_support=0.05, use_colnames=True)
+
+# Generate Association Rules
+rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
+
+# Display the rules
+print(rules)
+
+
+top_frequent_itemsets = frequent_itemsets.nlargest(10, 'support')
+
+plt.figure(figsize=(10, 6))
+sns.barplot(x='support', y='itemsets', data=top_frequent_itemsets)
+plt.title('Top 10 Frequent Itemsets by Support')
+plt.xlabel('Support')
+plt.ylabel('Itemsets')
+plt.show()
+
+# ---------------------------
+# Visualization 2: Scatter Plot of Association Rules by Confidence and Lift
+# ---------------------------
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='confidence', y='lift', size='support', data=rules, hue='antecedents', palette='viridis', sizes=(40, 200))
+plt.title('Association Rules: Confidence vs Lift')
+plt.xlabel('Confidence')
+plt.ylabel('Lift')
+plt.legend(title='Antecedents', bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.show()
+
+# ---------------------------
+# Visualization 3: Heatmap of Support, Confidence, and Lift
+# ---------------------------
+plt.figure(figsize=(10, 6))
+sns.heatmap(rules[['support', 'confidence', 'lift']].corr(), annot=True, cmap='coolwarm')
+plt.title('Correlation between Support, Confidence, and Lift')
 plt.show()
