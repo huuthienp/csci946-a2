@@ -10,13 +10,13 @@ REQS = [
     ('pip', 'pip==24.2'),
     ('matplotlib', 'matplotlib==3.9.2'),
     ('nltk', 'nltk==3.9.1'),
-    ('numpy', 'numpy==2.1.1'),
+    ('numpy', 'numpy==2.0.2'),
     ('optuna', 'optuna==4.0.0'),
     ('pandas', 'pandas==2.2.2'),
     ('seaborn', 'seaborn==0.13.2'),
     ('sklearn', 'scikit-learn==1.5.2'),
     ('statsmodels', 'statsmodels==0.14.3'),
-    ('umap', 'umap==0.1.1')
+    ('umap-learn', 'umap-learn==0.5.6')
 ]
 
 try:
