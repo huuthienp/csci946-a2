@@ -1252,3 +1252,137 @@ common_samples = misclassified_df_reg.index.intersection(misclassified_df.index)
 common_df = misclassified_df.loc[common_samples]
 
 scatterplot_mistaken_points(common_df, X_train_lin, "Boosted and Linear Regression Trees (Intersection) with Vectorised Text/Desc Features")
+
+
+
+
+# ============================== CLASSIFICATION ==============================
+
+# Features and target
+X = df_preprocessed.drop(columns=['gender'])  # Assuming 'gender' is the target variable
+y = df_preprocessed['gender']
+
+# Standardize the numerical features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+# Initialize RandomForestClassifier
+rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# Train the model
+rf_classifier.fit(X_train, y_train)
+
+# Predict on test data
+y_pred_rf = rf_classifier.predict(X_test)
+
+# Evaluate the performance
+print("Accuracy Score: ", accuracy_score(y_test, y_pred_rf))
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred_rf))
+print("Classification Report:\n", classification_report(y_test, y_pred_rf))
+
+# Initialize the XGBoost Classifier
+xgb_model = XGBClassifier(use_label_encoder=False, eval_metric='mlogloss', random_state=42)
+
+# Train the model
+xgb_model.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred_xgb = xgb_model.predict(X_test)
+
+# Evaluate the model
+print("\nXGBoost Classifier Report:")
+print(classification_report(y_test, y_pred_xgb))
+print("Accuracy:", accuracy_score(y_test, y_pred_xgb))
+
+# Initialize LightGBM classifier
+lgb_clf = lgb.LGBMClassifier(n_estimators=100, random_state=42)
+
+# Fit the model
+lgb_clf.fit(X_train, y_train)
+
+# Predict
+y_pred_lgb = lgb_clf.predict(X_test)
+
+# Evaluation
+print("LightGBM Classification Report:")
+print(classification_report(y_test, y_pred_lgb))
+
+# Helper function to plot confusion matrix
+def plot_confusion_matrix(y_test, y_pred, model_name):
+    cm = confusion_matrix(y_test, y_pred)
+    plt.figure(figsize=(6, 4))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False)
+    plt.title(f'{model_name} Confusion Matrix')
+    plt.ylabel('Actual')
+    plt.xlabel('Predicted')
+    plt.show()
+
+
+# Helper function to extract and display classification report with model name
+def get_classification_report(y_test, y_pred, model_name):
+    report = classification_report(y_test, y_pred, output_dict=True)
+    df = pd.DataFrame(report).transpose()
+    df['model'] = model_name
+    return df
+
+# Random Forest Confusion Matrix and Classification Report
+plot_confusion_matrix(y_test, y_pred_rf, "Random Forest")
+rf_report = get_classification_report(y_test, y_pred_rf, "Random Forest")
+
+# XGBoost Confusion Matrix and Classification Report
+plot_confusion_matrix(y_test, y_pred_xgb, "XGBoost")
+xgb_report = get_classification_report(y_test, y_pred_xgb, "XGBoost")
+
+# LightGBM Confusion Matrix and Classification Report
+plot_confusion_matrix(y_test, y_pred_lgb, "LightGBM")
+lgb_report = get_classification_report(y_test, y_pred_lgb, "LightGBM")
+
+# Combine all reports
+combined_report = pd.concat([rf_report, xgb_report, lgb_report])
+
+# Debugging Step: Check the combined report structure
+print("Combined Classification Report:\n", combined_report.head())
+
+# Filter out rows for precision, recall, and f1-score
+combined_report_filtered = combined_report[
+    combined_report.index.isin(['0', '1'])  # Filter for the classes
+].reset_index()
+
+# Debugging Step: Check the filtered report structure
+print("Filtered Report for Precision, Recall, and F1-Score:\n", combined_report_filtered.head())
+
+# Plot Precision, Recall, and F1-Score for each model
+metrics = ['precision', 'recall', 'f1-score']
+
+for metric in metrics:
+    # Debugging Step: Filter for specific metric
+    print(f"Data for {metric}:")
+    print(combined_report_filtered[['index', metric, 'model']])
+
+    plt.figure(figsize=(10, 6))
+    sns.barplot(
+        x="index",
+        y=metric,
+        hue="model",
+        data=combined_report_filtered[['index', metric, 'model']]
+    )
+    plt.title(f'{metric.capitalize()} Comparison')
+    plt.ylabel(metric.capitalize())
+    plt.xlabel('Class (0 = Human, 1 = Non-Human)')
+    plt.show()
+
+# Accuracy comparison
+accuracies = {
+    'Random Forest': accuracy_score(y_test, y_pred_rf),
+    'XGBoost': accuracy_score(y_test, y_pred_xgb),
+    'LightGBM': accuracy_score(y_test, y_pred_lgb)
+}
+
+plt.figure(figsize=(6, 4))
+plt.bar(accuracies.keys(), accuracies.values(), color=['blue', 'green', 'red'])
+plt.title('Model Accuracy Comparison')
+plt.ylabel('Accuracy')
+plt.show()
