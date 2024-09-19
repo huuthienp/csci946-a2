@@ -979,10 +979,12 @@ cal_scores = [cal_ex1, cal_ex2, cal_ex3]
 plot_silhouette_bar_across_experiments(model_names, sil_scores)
 visualize_ch_index_across_experiments(model_names, cal_scores)
 
-# ==================================================
+
+
+# =============================== REGRESSION ======================================
 print()
 print()
-df_preprocessed_reg = df_preprocessed.copy()
+df_preprocessed_reg = df_finalised.copy()
 y = df_preprocessed["gender:confidence"].reset_index(drop=True)
 df_preprocessed_reg = df_preprocessed_reg.drop(['gender', "gender:confidence"], axis=1)
 
