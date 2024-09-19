@@ -8,6 +8,7 @@ warnings.filterwarnings('ignore')
 
 REQS = [
     ('pip', 'pip==24.2'),
+    ('lightgbm', 'lightgbm==4.5.0'),
     ('matplotlib', 'matplotlib==3.9.2'),
     ('nltk', 'nltk==3.9.1'),
     ('numpy', 'numpy==2.0.2'),
@@ -16,7 +17,8 @@ REQS = [
     ('seaborn', 'seaborn==0.13.2'),
     ('sklearn', 'scikit-learn==1.5.2'),
     ('statsmodels', 'statsmodels==0.14.3'),
-    ('umap-learn', 'umap-learn==0.5.6')
+    ('umap-learn', 'umap-learn==0.5.6'),
+    ('xgboost', 'xgboost==2.1.1')
 ]
 
 try:
@@ -49,12 +51,19 @@ from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 
 # Machine learning and data processing
-from sklearn.preprocessing import StandardScaler
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans, DBSCAN
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import (
+    accuracy_score,
+    calinski_harabasz_score,
+    classification_report,
+    confusion_matrix,
+    mean_squared_error,
+    silhouette_score
+)
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.metrics import silhouette_score, calinski_harabasz_score, mean_squared_error
+from sklearn.preprocessing import StandardScaler
 
 # Statistical modeling
 import statsmodels.api as sm
@@ -63,14 +72,18 @@ from statsmodels.tools.tools import add_constant
 # Natural Language Processing
 import nltk
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
+from nltk.tokenize import word_tokenize
 
 # Dimensionality reduction
 import umap
 
 # Hyperparameter optimization
 import optuna
+
+# Other machine learning libraries
+import lightgbm as lgb
+from xgboost import XGBClassifier
 
 
 def find_columns_with_missing(data, columns):
