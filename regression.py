@@ -469,21 +469,26 @@ mse_test = mean_squared_error(y_test, y_pred)
 mse_train = mean_squared_error(y_train, y_pred_train)
 mse_total = mean_squared_error(y, y_tot_pred)
 
-print(f"Mean Squared Error train: {mse_train}")
-print(f"Mean Squared Error test: {mse_test}")
-print(f"Mean Squared Error total: {mse_total}")
+print(f"Mean Squared Error (Train): {mse_train:.4f}")
+print(f"Mean Squared Error (Test): {mse_test:.4f}")
+print(f"Mean Squared Error (Total): {mse_total:.4f}")
 
 # PLOT MSE
 labels = ['Train', 'Test', 'Total']
 mse_values = [mse_train, mse_test, mse_total]
 plt.figure(figsize=(8, 6))
 plt.bar(labels, mse_values, color=['skyblue', 'salmon', 'lightgreen'])
-plt.title('Mean Squared Error for Train, Test, and Total for boosted regression tree with vectorized text / desc features')
-plt.xlabel('Dataset')
-plt.ylabel('Mean Squared Error')
+plt.suptitle('Boosted Regression Tree with Vectorised Text/Desc Features', fontsize=16)
+plt.title('Mean Squared Error Comparison', fontsize=14)
+plt.xlabel('Dataset Type')
+plt.ylabel('MSE')
 plt.show()
 
 #FEATURE IMPORTANCE
+print()
+print("=" * 50)
+print("Feature Importance Analysis")
+print("=" * 50)
 # Find column indices that start with 'desc_' and 'text_'
 desc_columns = [i for i, col in enumerate(df_preprocessed_reg.columns) if col.startswith('desc_')]
 text_columns = [i for i, col in enumerate(df_preprocessed_reg.columns) if col.startswith('text_')]
@@ -519,7 +524,8 @@ df_melted = feature_importance.melt(var_name='Feature', value_name='Importance i
 df_melted = df_melted.sort_values(ascending=False, by="Importance in percentage")
 plt.figure(figsize=(10, 8))
 sns.barplot(x='Importance in percentage', y='Feature', data=df_melted, palette='viridis')
-plt.title('Feature Importances for boosted regression tree with vectorized text / desc features')
+plt.suptitle('Boosted Regression Tree with Vectorised Text/Desc Features', fontsize=16)
+plt.title('Feature Importance Analysis', fontsize=14)
 plt.show()
 
 
@@ -565,16 +571,17 @@ def scatterplot_mistaken_points(misclassified_df, X_train):
 
 def scatter_plot(y, y_tot_pred, model):
     #Plotting more results results
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(10, 8))
     plt.scatter(y, y_tot_pred, alpha=0.5)
     plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', lw=2)
-    plt.xlabel('Dataset Gender Confidence')
-    plt.ylabel('Predicted Gender Confidence')
-    plt.title('Predicted gender confidence vs. Dataset gender confidence' + model)
+    plt.xlabel('Dataset', fontsize=12)
+    plt.ylabel('Predicted', fontsize=12)
+    plt.suptitle(model, fontsize=16)
+    plt.title('Gender Confidence Comparison', fontsize=14)
     plt.show()
 
 scatterplot_mistaken_points(misclassified_df, X_train)
-scatter_plot(y, y_tot_pred, "for boosted regression tree with vectorized text / desc features")
+scatter_plot(y, y_tot_pred, "Boosted Regression Tree with Vectorised Text/Desc Features")
 
 #==============================analyze without text features=============================================
 columns_to_drop = [col for col in df_preprocessed_reg.columns if col.startswith(('desc_', 'text_'))]
@@ -596,18 +603,19 @@ mse_train = mean_squared_error(y_train_non_text, y_pred_train)
 mse_total = mean_squared_error(y, y_tot_pred)
 y_tot_pred = boosted_reg_non_text.predict(df_preprocessed_non_text)
 
-print(f"Mean Squared Error train: {mse_train}")
-print(f"Mean Squared Error test: {mse_test}")
-print(f"Mean Squared Error total: {mse_total}")
+print(f"Mean Squared Error (Train): {mse_train:.4f}")
+print(f"Mean Squared Error (Test): {mse_test:.4f}")
+print(f"Mean Squared Error (Total): {mse_total:.4f}")
 
 # PLOT MSE
 labels = ['Train', 'Test', 'Total']
 mse_values = [mse_train, mse_test, mse_total]
 plt.figure(figsize=(8, 6))
 plt.bar(labels, mse_values, color=['skyblue', 'salmon', 'lightgreen'])
-plt.title('Mean Squared Error for Train, Test, and Total for boosted regression tree with vectorized text / desc features')
-plt.xlabel('Dataset')
-plt.ylabel('Mean Squared Error')
+plt.suptitle('Boosted Regression Tree without Vectorised Text/Desc Features', fontsize=16)
+plt.title('Mean Squared Error Comparison', fontsize=14)
+plt.xlabel('Dataset Type')
+plt.ylabel('MSE')
 plt.show()
 
 # Get feature importances and plot from the model
@@ -620,7 +628,8 @@ feature_importance_df = pd.DataFrame({
 feature_importance_df = feature_importance_df.sort_values(by='Importance in percentage', ascending=False)
 plt.figure(figsize=(10, 8))
 sns.barplot(x='Importance in percentage', y='Feature', data=feature_importance_df, palette='viridis')
-plt.title('Feature Importances for boosted regression tree without vectorized text / desc features ')
+plt.suptitle('Boosted Regression Tree without Vectorised Text/Desc Features', fontsize=16)
+plt.title('Feature Importance Analysis', fontsize=14)
 plt.show()
 
 #adding the dataset gender confidence
@@ -634,7 +643,7 @@ misclassified_df = df_preprocessed_non_text[(df_preprocessed_non_text["differenc
 non_train_misclassify = misclassified_df[misclassified_df.index.isin(X_train_non_text.index)]
 train_misclassify = misclassified_df[~misclassified_df.index.isin(X_train_non_text.index)]
 scatterplot_mistaken_points(misclassified_df, X_train_non_text)
-scatter_plot(y, y_tot_pred, "for boosted regression tree without vectorized text / desc features")
+scatter_plot(y, y_tot_pred, "Boosted Regression Tree without Vectorised Text/Desc Features")
 
 #====================================Analyzing with a linear regression (Least Squares Implementation)====================
 X_train_lin = sm.add_constant(X_train)
@@ -653,18 +662,19 @@ mse_test = mean_squared_error(y_test, y_lin_pred)
 mse_total = mean_squared_error(y, y_lin_tot_pred)
 mse_train = mean_squared_error(y_train, y_lin_train)
 
-print(f"Mean Squared Error train: {mse_train}")
-print(f"Mean Squared Error test: {mse_test}")
-print(f"Mean Squared Error total: {mse_total}")
+print(f"Mean Squared Error (Train): {mse_train:.4f}")
+print(f"Mean Squared Error (Test): {mse_test:.4f}")
+print(f"Mean Squared Error (Total): {mse_total:.4f}")
 
 # PLOT MSE
 labels = ['Train', 'Test', 'Total']
 mse_values = [mse_train, mse_test, mse_total]
 plt.figure(figsize=(8, 6))
 plt.bar(labels, mse_values, color=['skyblue', 'salmon', 'lightgreen'])
-plt.title('Mean Squared Error for Train, Test, and Total for linear regression tree with vectorized text / desc features')
-plt.xlabel('Dataset')
-plt.ylabel('Mean Squared Error')
+plt.suptitle('Linear Regression Tree with Vectorised Textual Features', fontsize=16)
+plt.title('Mean Squared Error Comparison', fontsize=14)
+plt.xlabel('Dataset Type')
+plt.ylabel('MSE')
 plt.show()
 
 #final preprocess
@@ -679,11 +689,7 @@ misclassified_df = df_preprocessed_lin[(df_preprocessed_lin["difference"] > 0.1)
 non_train_misclassify = misclassified_df[misclassified_df.index.isin(X_train_lin.index)]
 train_misclassify = misclassified_df[~misclassified_df.index.isin(X_train_lin.index)]
 
-
-
-
-
-scatter_plot(y, y_lin_tot_pred, "for linear regression with vectorized text / description features")
+scatter_plot(y, y_lin_tot_pred, "Linear Regression with Vectorised Text/Desc Features")
 
 # Edit misclassified_df to include 'in X_train'
 misclassified_df["in X_train"] = misclassified_df.index.isin(X_train_lin.index)
