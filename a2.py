@@ -692,6 +692,8 @@ df_preprocessed = df_preprocessed.drop(columns=['cleaned_description', 'cleaned_
 
 df_preprocessed = pd.concat([df_preprocessed, rgb_df], axis=1)
 
+df_asso = df_preprocessed.copy()
+
 df_cate = df_preprocessed[['tweet_location_encoded', 'user_timezone_encoded']].copy()
 
 print()
@@ -1401,17 +1403,17 @@ print()
 print()
 print('---- ASSOCIATION RULES ----')
 # Binarize numeric columns
-df_preprocessed['high_favorites'] = df_preprocessed['favorites_per_day'] > df_preprocessed['favorites_per_day'].mean()
-df_preprocessed['high_retweets'] = df_preprocessed['retweets_per_day'] > df_preprocessed['retweets_per_day'].mean()
-df_preprocessed['high_tweets'] = df_preprocessed['tweets_per_day'] > df_preprocessed['tweets_per_day'].mean()
+df_asso['high_favorites'] = df_asso['favorites_per_day'] > df_asso['favorites_per_day'].mean()
+df_asso['high_retweets'] = df_asso['retweets_per_day'] > df_asso['retweets_per_day'].mean()
+df_asso['high_tweets'] = df_asso['tweets_per_day'] > df_asso['tweets_per_day'].mean()
 
 # Binarize year columns (profile_created_year and tweet_created_year)
 # Example: Set threshold year as 2015
-df_preprocessed['profile_recent'] = df_preprocessed['profile_created_year'] >= 2015
-df_preprocessed['tweet_recent'] = df_preprocessed['tweet_created_year'] >= 2015
+df_asso['profile_recent'] = df_asso['profile_created_year'] >= 2015
+df_asso['tweet_recent'] = df_asso['tweet_created_year'] >= 2015
 
 # Select only the binary columns
-df_apriori = df_preprocessed[['high_favorites', 'high_retweets', 'high_tweets',
+df_apriori = df_asso[['high_favorites', 'high_retweets', 'high_tweets',
                               'profile_recent', 'tweet_recent',
                               'tweet_location_encoded', 'user_timezone_encoded']]
 
