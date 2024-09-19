@@ -346,7 +346,7 @@ class ClusteringDataRetriever:
         return df[df['Cluster_Label'] == cluster_label]
 
     def get_noise_data(self):
-        # Retrieve Data points classified as noise (-1 label) in DBSCAN.
+        # Retrieve Records classified as noise (-1 label) in DBSCAN.
         return self.get_cluster_data(-1)
 
 
@@ -679,10 +679,13 @@ df_preprocessed = pd.concat([df_preprocessed, rgb_df], axis=1)
 df_cate = df_preprocessed[['tweet_location_encoded', 'user_timezone_encoded']].copy()
 
 print()
+print()
 print('---- CLUSTERING MODELS ----')
 
 print()
-print('Exp 1: Using All Selected Features')
+print("=" * 50)
+print('EXP 1: USING ALL SELECTED FEATURES')
+print("=" * 50)
 
 sil_ex1 = []
 cal_ex1 = []
@@ -709,8 +712,10 @@ df_ex1 = df_finalised.drop(columns=['gender', 'gender:confidence'])
 print()
 print('Dataset for Exp 1')
 print(df_ex1.info())
+print()
 
 # Apply UMAP for dimensionality reduction
+print('Applying UMAP for dim reduction...')
 umap_model = umap.UMAP()
 umap_vis = umap.UMAP(n_neighbors=30,min_dist=0.1, n_components=3, random_state=42)
 umap_embedding = umap_model.fit_transform(df_ex1)
@@ -736,7 +741,8 @@ print()
 print('Dataset with Labels from KMeans in Exp 1')
 print(df_with_labels.head())
 for label in np.unique(k_labels):
-    print(f'Data points that belong to cluster {label} from KMeans in Exp 1')
+    print()
+    print(f'Records found in cluster {label} from KMeans in Exp 1')
     print(k_retriever.get_cluster_data(label))
     print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
     print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
@@ -761,16 +767,19 @@ print('Dataset with Labels from DBSCAN in Exp 1')
 print(df_with_labels.head())
 for label in np.unique(db_labels):
     if label != -1:
-        print(f'Data points that belong to cluster {label} from DBSCAN in Exp 1')
+        print()
+        print(f'Records found in cluster {label} from DBSCAN in Exp 1')
         print(db_retriever.get_cluster_data(label))
         print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
         print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
         print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-print('Data points classified as noise')
+print('Records classified as noise')
 print(db_retriever.get_noise_data())
 
 print()
-print('Exp 2: Using Only Numerical and Categorical Features')
+print("=" * 50)
+print('EXP 2: USING ONLY NUMERICAL AND CATEGORICAL FEATURES')
+print("=" * 50)
 
 sil_ex2 = []
 cal_ex2 = []
@@ -781,21 +790,25 @@ chunk_size = 100
 for i in range(0, df_num.shape[0], chunk_size):
     df_num.iloc[i:i + chunk_size] = scaler.fit_transform(df_num.iloc[i:i + chunk_size])
 df_no_text = pd.concat([df_num, df_cate, df_gender], axis=1)
+print()
 print("Data with Only Numerical and Categorical Features")
-print(df_no_text.head())
 print(df_no_text.info())
+print()
 
 df_no_text = df_no_text.dropna()
 df_no_text_wg = df_no_text.copy()
+print('Removing NaN values...')
 
 # Drop gender feature before clustering
 data_exp2 = df_no_text.drop(columns=['gender', 'gender:confidence'])
+print('Dropping gender and gender:confidence...')
 
 # Check No. of records after drop NaN values
 print()
 print("Dataset for Exp 2")
-print(data_exp2.head())
 print(data_exp2.info())
+print()
+print(data_exp2.head())
 
 # Apply UMAP for dimensionality reduction
 print('Applying UMAP for dim reduction...')
@@ -822,7 +835,8 @@ print()
 print('Dataset with Labels from KMeans in Exp 2')
 print(df_with_labels.head())
 for label in np.unique(k_labels):
-    print(f'Data points that belong to cluster {label} from KMeans in Exp 2')
+    print()
+    print(f'Records found in cluster {label} from KMeans in Exp 2')
     print(k_retriever.get_cluster_data(label))
     print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
     print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
@@ -847,16 +861,19 @@ print('Dataset with Labels from DBSCAN in Exp 2')
 print(df_with_labels.head())
 for label in np.unique(db_labels):
     if label != -1:
-        print(f'Data points that belong to cluster {label} from DBSCAN in Exp 2')
+        print()
+        print(f'Records found in cluster {label} from DBSCAN in Exp 2')
         print(db_retriever.get_cluster_data(label))
         print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
         print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
         print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-print('Data points classified as noise')
+print('Records classified as noise')
 print(db_retriever.get_noise_data())
 
 print()
-print('Exp 3: Using Only Text Features')
+print("=" * 50)
+print('EXP 3: USING ONLY TEXT FEATURES')
+print("=" * 50)
 
 sil_ex3 = []
 cal_ex3 = []
@@ -877,8 +894,10 @@ data_exp3 = df_with_text_wg.drop(columns=['gender', 'gender:confidence'])
 
 print('Dataset for Exp 3')
 print(data_exp3.info())
+print()
 print(data_exp3.head())
 
+print('Applying UMAP for dim reduction...')
 umap_model = umap.UMAP()
 umap_embedding_t = umap_model.fit_transform(data_exp3)
 umap_embedding = umap.UMAP(n_neighbors=30,min_dist=0.1, n_components=3, random_state=42).fit_transform(data_exp3)
@@ -901,7 +920,8 @@ print()
 print('Dataset with Labels from KMeans in Exp 3')
 print(df_with_labels.head())
 for label in np.unique(k_labels):
-    print(f'Data points that belong to cluster {label} from KMeans in Exp 3')
+    print()
+    print(f'Records found in cluster {label} from KMeans in Exp 3')
     print(k_retriever.get_cluster_data(label))
     print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
     print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
@@ -925,12 +945,13 @@ print('Dataset with Labels from DBSCAN in Exp 3')
 print(df_with_labels.head())
 for label in np.unique(db_labels):
     if label != -1:
-        print(f'Data points that belong to cluster {label} from DBSCAN in Exp 3')
+        print()
+        print(f'Records found in cluster {label} from DBSCAN in Exp 3')
         print(db_retriever.get_cluster_data(label))
         print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
         print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
         print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-print('Data points classified as noise')
+print('Records classified as noise')
 print(db_retriever.get_noise_data())
 
 print()
