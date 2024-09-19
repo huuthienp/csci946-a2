@@ -452,6 +452,11 @@ df_preprocessed_reg = df_preprocessed.copy()
 y = df_preprocessed["gender:confidence"].reset_index(drop=True)
 df_preprocessed_reg = df_preprocessed_reg.drop(['gender', "gender:confidence"], axis=1)
 
+print()
+print("=" * 50)
+print('Boosted Regression Tree with Vectorised Text/Desc Features')
+print("=" * 50)
+
 # Split the dataset into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(df_preprocessed_reg, y, test_size=0.6, random_state=42)
 boosted_reg = GradientBoostingRegressor(n_estimators=50, learning_rate=0.1, max_depth=3, random_state=42)
@@ -486,9 +491,7 @@ plt.show()
 
 #FEATURE IMPORTANCE
 print()
-print("=" * 50)
-print("Feature Importance Analysis")
-print("=" * 50)
+print("Performing feature importance analysis...")
 # Find column indices that start with 'desc_' and 'text_'
 desc_columns = [i for i, col in enumerate(df_preprocessed_reg.columns) if col.startswith('desc_')]
 text_columns = [i for i, col in enumerate(df_preprocessed_reg.columns) if col.startswith('text_')]
@@ -496,10 +499,10 @@ text_columns = [i for i, col in enumerate(df_preprocessed_reg.columns) if col.st
 desc_array = boosted_reg.feature_importances_[desc_columns]
 text_array = boosted_reg.feature_importances_[text_columns]
 # Output the results
-print("desc_ column indices:", desc_columns)
-print("text_ column indices:", text_columns)
-print("desc_ array:\n", desc_array)
-print("text_ array:\n", text_array)
+# print("desc_ column indices:", desc_columns)
+# print("text_ column indices:", text_columns)
+# print("desc_ array:\n", desc_array)
+# print("text_ array:\n", text_array)
 # Sum the values for desc_ and text_ columns
 desc_sum = np.sum(boosted_reg.feature_importances_[desc_columns])
 text_sum = np.sum(boosted_reg.feature_importances_[text_columns])
@@ -544,28 +547,30 @@ train_misclassify = misclassified_df[~misclassified_df.index.isin(X_train.index)
 
 #plotting these columns
 
-def scatterplot_mistaken_points(misclassified_df, X_train):
+def scatterplot_mistaken_points(misclassified_df, X_train, model):
     # Edit misclassified_df to include 'in X_train'
     misclassified_df["in X_train"] = misclassified_df.index.isin(X_train.index)
     # Create subsets for the two plots
     df_in_X_train = misclassified_df[misclassified_df["in X_train"]]
     df_not_in_X_train = misclassified_df[~misclassified_df["in X_train"]]
     # Set up the matplotlib figure with subplots
-    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    fig, axes = plt.subplots(1, 2, figsize=(20, 8))
+    # Set the main title
+    fig.suptitle(f'{model}\nGender Confidence of "Mistaken" Records', fontsize=16)
     # Plot 1: Points in X_train
     sns.scatterplot(data=df_in_X_train, x='gender:confidence', y='gender_confidence_pred', alpha=0.4, ax=axes[0], color='blue')
     axes[0].plot([df_in_X_train['gender:confidence'].min(), df_in_X_train['gender:confidence'].max()],
-                [df_in_X_train['gender:confidence'].min(), df_in_X_train['gender:confidence'].max()], 'k--', lw=2)
-    axes[0].set_xlabel('Dataset Gender Confidence')
-    axes[0].set_ylabel('Predicted Gender Confidence')
-    axes[0].set_title(f'In X_train\nTotal Samples: {len(df_in_X_train)}')
+                 [df_in_X_train['gender:confidence'].min(), df_in_X_train['gender:confidence'].max()], 'k--', lw=2)
+    axes[0].set_xlabel('Dataset')
+    axes[0].set_ylabel('Predicted')
+    axes[0].set_title(f'Training Set\nSample Size: {len(df_in_X_train)}')
     # Plot 2: Points not in X_train
     sns.scatterplot(data=df_not_in_X_train, x='gender:confidence', y='gender_confidence_pred', alpha=0.4, ax=axes[1], color='red')
     axes[1].plot([df_not_in_X_train['gender:confidence'].min(), df_not_in_X_train['gender:confidence'].max()],
-                [df_not_in_X_train['gender:confidence'].min(), df_not_in_X_train['gender:confidence'].max()], 'k--', lw=2)
-    axes[1].set_xlabel('Dataset Gender Confidence')
-    axes[1].set_ylabel('Predicted Gender Confidence')
-    axes[1].set_title(f'Not in X_train\nTotal Samples: {len(df_not_in_X_train)}')
+                 [df_not_in_X_train['gender:confidence'].min(), df_not_in_X_train['gender:confidence'].max()], 'k--', lw=2)
+    axes[1].set_xlabel('Dataset')
+    axes[1].set_ylabel('Predicted')
+    axes[1].set_title(f'Not Training Set\nSample Size: {len(df_not_in_X_train)}')
     plt.tight_layout()
     plt.show()
 
@@ -580,13 +585,18 @@ def scatter_plot(y, y_tot_pred, model):
     plt.title('Gender Confidence Comparison', fontsize=14)
     plt.show()
 
-scatterplot_mistaken_points(misclassified_df, X_train)
+scatterplot_mistaken_points(misclassified_df, X_train, "Boosted Regression Tree with Vectorised Text/Desc Features")
 scatter_plot(y, y_tot_pred, "Boosted Regression Tree with Vectorised Text/Desc Features")
 
 #==============================analyze without text features=============================================
 columns_to_drop = [col for col in df_preprocessed_reg.columns if col.startswith(('desc_', 'text_'))]
 df_preprocessed_non_text = df_preprocessed_reg.drop(columns=columns_to_drop)
 print(df_preprocessed_non_text)
+
+print()
+print("=" * 50)
+print('Boosted Regression Tree without Vectorised Text/Desc Features')
+print("=" * 50)
 
 boosted_reg_non_text = GradientBoostingRegressor(n_estimators=50, learning_rate=0.1, max_depth=3, random_state=42)
 # Split the dataset into training and testing sets
@@ -619,6 +629,8 @@ plt.ylabel('MSE')
 plt.show()
 
 # Get feature importances and plot from the model
+print()
+print("Performing feature importance analysis...")
 feature_importances = boosted_reg_non_text.feature_importances_
 column_names = X_train_non_text.columns
 feature_importance_df = pd.DataFrame({
@@ -642,10 +654,16 @@ df_preprocessed_non_text["difference"] = y.to_numpy() - y_tot_pred
 misclassified_df = df_preprocessed_non_text[(df_preprocessed_non_text["difference"] > 0.1) & (df_preprocessed_non_text["gender_confidence_pred"] < 0.85)]
 non_train_misclassify = misclassified_df[misclassified_df.index.isin(X_train_non_text.index)]
 train_misclassify = misclassified_df[~misclassified_df.index.isin(X_train_non_text.index)]
-scatterplot_mistaken_points(misclassified_df, X_train_non_text)
+scatterplot_mistaken_points(misclassified_df, X_train_non_text, "Boosted Regression Tree without Vectorised Text/Desc Features")
 scatter_plot(y, y_tot_pred, "Boosted Regression Tree without Vectorised Text/Desc Features")
 
 #====================================Analyzing with a linear regression (Least Squares Implementation)====================
+
+print()
+print("=" * 50)
+print('Linear Regression Tree with Vectorised Text/Desc Features')
+print("=" * 50)
+
 X_train_lin = sm.add_constant(X_train)
 X_test_lin = sm.add_constant(X_test)
 df_preprocessed_lin = sm.add_constant(df_preprocessed_reg)
@@ -689,38 +707,12 @@ misclassified_df = df_preprocessed_lin[(df_preprocessed_lin["difference"] > 0.1)
 non_train_misclassify = misclassified_df[misclassified_df.index.isin(X_train_lin.index)]
 train_misclassify = misclassified_df[~misclassified_df.index.isin(X_train_lin.index)]
 
-scatter_plot(y, y_lin_tot_pred, "Linear Regression with Vectorised Text/Desc Features")
-
-# Edit misclassified_df to include 'in X_train'
-misclassified_df["in X_train"] = misclassified_df.index.isin(X_train_lin.index)
-# Create subsets for the two plots
-df_in_X_train = misclassified_df[misclassified_df["in X_train"]]
-df_not_in_X_train = misclassified_df[~misclassified_df["in X_train"]]
-
-# Set up the matplotlib figure with subplots
-fig, axes = plt.subplots(1, 2, figsize=(16, 6))
-# Plot 1: Points in X_train
-sns.scatterplot(data=df_in_X_train, x='gender:confidence', y='gender_confidence_pred', alpha=0.4, ax=axes[0], color='blue')
-axes[0].plot([df_in_X_train['gender:confidence'].min(), df_in_X_train['gender:confidence'].max()],
-             [df_in_X_train['gender:confidence'].min(), df_in_X_train['gender:confidence'].max()], 'k--', lw=2)
-axes[0].set_xlabel('Dataset Gender Confidence')
-axes[0].set_ylabel('Predicted Gender Confidence')
-axes[0].set_title(f'In X_train\nTotal Samples: {len(df_in_X_train)}')
-
-# Plot 2: Points not in X_train
-sns.scatterplot(data=df_not_in_X_train, x='gender:confidence', y='gender_confidence_pred', alpha=0.4, ax=axes[1], color='red')
-axes[1].plot([df_not_in_X_train['gender:confidence'].min(), df_not_in_X_train['gender:confidence'].max()],
-             [df_not_in_X_train['gender:confidence'].min(), df_not_in_X_train['gender:confidence'].max()], 'k--', lw=2)
-axes[1].set_xlabel('Dataset Gender Confidence')
-axes[1].set_ylabel('Predicted Gender Confidence')
-axes[1].set_title(f'Not in X_train\nTotal Samples: {len(df_not_in_X_train)}')
-
-# Adjust layout
-plt.tight_layout()
+scatter_plot(y, y_lin_tot_pred, "Linear Regression Tree with Vectorised Text/Desc Features")
+scatterplot_mistaken_points(misclassified_df, X_train_lin, "Linear Regression Tree with Vectorised Text/Desc Features")
 
 
 #================================Identity final mistaken samples====================================
 common_samples = misclassified_df_reg.index.intersection(misclassified_df.index)
 common_df = misclassified_df.loc[common_samples]
 
-scatterplot_mistaken_points(common_df, X_train_lin)
+scatterplot_mistaken_points(common_df, X_train_lin, "Boosted and Linear Regression Trees (Intersection) with Vectorised Text/Desc Features")
