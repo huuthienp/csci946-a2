@@ -15,7 +15,7 @@ REQS = [
     ('pandas', 'pandas==2.2.2'),
     ('seaborn', 'seaborn==0.13.2'),
     ('sklearn', 'scikit-learn==1.5.2'),
-    ('statsmodels', 'statsmodels==0.14.3')
+    ('statsmodels', 'statsmodels==0.14.3'),
     ('umap', 'umap==0.1.1')
 ]
 
@@ -77,6 +77,7 @@ def find_columns_with_missing(data, columns):
     """Finding features that have a lot of missing data"""
     print()
     print('Finding columns with missing data...')
+    data_cleaned = data
     missing = []
     i = 0
     for col in columns:
@@ -87,8 +88,7 @@ def find_columns_with_missing(data, columns):
             print(f'Proportion of missing data is {missing[i]/len(data)}.')
             if missing[i]/len(data) >= 0.9:
                 print(f'Dropping column {col}...')
-                data = data.drop(columns=col)
-                data_cleaned = data
+                data_cleaned = data_cleaned.drop(columns=col)
         i += 1
     return missing, data_cleaned
 
