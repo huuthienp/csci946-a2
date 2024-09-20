@@ -4,43 +4,43 @@ import subprocess
 import sys
 import warnings
 
-warnings.filterwarnings('ignore')
+# warnings.filterwarnings('ignore')
 
-REQS = [
-    ('pip', 'pip==24.2'),
-    ('lightgbm', 'lightgbm==4.5.0'),
-    ('matplotlib', 'matplotlib==3.9.2'),
-    ('mlxtend', 'mlxtend==0.23.1'),
-    ('nltk', 'nltk==3.9.1'),
-    ('numpy', 'numpy==2.0.2'),
-    ('optuna', 'optuna==4.0.0'),
-    ('pandas', 'pandas==2.2.2'),
-    ('seaborn', 'seaborn==0.13.2'),
-    ('sklearn', 'scikit-learn==1.5.2'),
-    ('statsmodels', 'statsmodels==0.14.3'),
-    ('umap-learn', 'umap-learn==0.5.6'),
-    ('xgboost', 'xgboost==2.1.1'),
-]
+# REQS = [
+#     ('pip', 'pip==24.2'),
+#     ('lightgbm', 'lightgbm==4.5.0'),
+#     ('matplotlib', 'matplotlib==3.9.2'),
+#     ('mlxtend', 'mlxtend==0.23.1'),
+#     ('nltk', 'nltk==3.9.1'),
+#     ('numpy', 'numpy==2.0.2'),
+#     ('optuna', 'optuna==4.0.0'),
+#     ('pandas', 'pandas==2.2.2'),
+#     ('seaborn', 'seaborn==0.13.2'),
+#     ('sklearn', 'scikit-learn==1.5.2'),
+#     ('statsmodels', 'statsmodels==0.14.3'),
+#     ('umap-learn', 'umap-learn==0.5.6'),
+#     ('xgboost', 'xgboost==2.1.1'),
+# ]
 
-try:
-    subprocess.check_call([sys.executable, '-m', 'ensurepip'])
-except Exception as e:
-    print(e, file=sys.stderr)
-
-
-def ensure_installed(module_info):
-    _, install_str = module_info
-    try:
-        subprocess.check_call([sys.executable, '-m',
-                               'pip', 'install', '--quiet',
-                               install_str])
-        print(f'Installed "{install_str}".')
-    except Exception as e:
-        print(e, file=sys.stderr)
+# try:
+#     subprocess.check_call([sys.executable, '-m', 'ensurepip'])
+# except Exception as e:
+#     print(e, file=sys.stderr)
 
 
-for m in REQS:
-    ensure_installed(m)
+# def ensure_installed(module_info):
+#     _, install_str = module_info
+#     try:
+#         subprocess.check_call([sys.executable, '-m',
+#                                'pip', 'install', '--quiet',
+#                                install_str])
+#         print(f'Installed "{install_str}".')
+#     except Exception as e:
+#         print(e, file=sys.stderr)
+
+
+# for m in REQS:
+#     ensure_installed(m)
 
 # Standard libraries
 import numpy as np
@@ -726,263 +726,263 @@ data_exp1 = df_finalised
 df_ex1 = df_finalised.drop(columns=['gender', 'gender:confidence'])
 
 
-# Check the preprocessed dataset in the present
-print()
-print('Dataset for Exp 1')
-print(df_ex1.info())
-print()
+# # Check the preprocessed dataset in the present
+# print()
+# print('Dataset for Exp 1')
+# print(df_ex1.info())
+# print()
 
-# Apply UMAP for dimensionality reduction
-print('Applying UMAP for dim reduction...')
-umap_model = umap.UMAP()
-umap_vis = umap.UMAP(n_neighbors=30,min_dist=0.1, n_components=3, random_state=42)
-umap_embedding = umap_model.fit_transform(df_ex1)
-umap_plot = umap_vis.fit_transform(df_ex1)
-print(umap_embedding.shape)
+# # Apply UMAP for dimensionality reduction
+# print('Applying UMAP for dim reduction...')
+# umap_model = umap.UMAP()
+# umap_vis = umap.UMAP(n_neighbors=30,min_dist=0.1, n_components=3, random_state=42)
+# umap_embedding = umap_model.fit_transform(df_ex1)
+# umap_plot = umap_vis.fit_transform(df_ex1)
+# print(umap_embedding.shape)
 
-# K-Means Clustering
-print()
-print('Performing K-Means Clustering...')
-kmeans_clustering = KMeansClustering(umap_embedding)
-kmeans_clustering.tune_hyperparameters()
-kmeans_exp1 = kmeans_clustering.fit_model()
-kmeans_clustering.visualize_clusters(umap_plot, 'All feature types')
-kmeans_clustering.plot_elbow_method()
-k_labels = kmeans_clustering.output_label()
-sil_ex1.append(kmeans_clustering.silhoutte())
-cal_ex1.append(kmeans_clustering.calinski())
+# # K-Means Clustering
+# print()
+# print('Performing K-Means Clustering...')
+# kmeans_clustering = KMeansClustering(umap_embedding)
+# kmeans_clustering.tune_hyperparameters()
+# kmeans_exp1 = kmeans_clustering.fit_model()
+# kmeans_clustering.visualize_clusters(umap_plot, 'All feature types')
+# kmeans_clustering.plot_elbow_method()
+# k_labels = kmeans_clustering.output_label()
+# sil_ex1.append(kmeans_clustering.silhoutte())
+# cal_ex1.append(kmeans_clustering.calinski())
 
-k_retriever = ClusteringDataRetriever(data_exp1, k_labels)
-df_with_labels = k_retriever.get_data_with_labels()
+# k_retriever = ClusteringDataRetriever(data_exp1, k_labels)
+# df_with_labels = k_retriever.get_data_with_labels()
 
-print()
-print('Dataset with Labels from KMeans in Exp 1')
-print(df_with_labels.head())
-for label in np.unique(k_labels):
-    print()
-    print(f'Records found in cluster {label} from KMeans in Exp 1')
-    print(k_retriever.get_cluster_data(label))
-    print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-    print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-    print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+# print()
+# print('Dataset with Labels from KMeans in Exp 1')
+# print(df_with_labels.head())
+# for label in np.unique(k_labels):
+#     print()
+#     print(f'Records found in cluster {label} from KMeans in Exp 1')
+#     print(k_retriever.get_cluster_data(label))
+#     print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+#     print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+#     print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
 
-# DBSCAN Clustering
-print()
-print('Performing DBSCAN Clustering...')
-dbscan_clustering = DBSCANClustering(umap_embedding)
-dbscan_clustering.tune_hyperparameters()
-dbscan_exp1 = dbscan_clustering.fit_model()
-dbscan_clustering.visualize_clusters_and_outliers_3D(umap_plot, 'All feature types')
-db_labels = dbscan_clustering.output_label()
-sil_ex1.append(dbscan_clustering.silhoutte())
-cal_ex1.append(dbscan_clustering.calinski())
+# # DBSCAN Clustering
+# print()
+# print('Performing DBSCAN Clustering...')
+# dbscan_clustering = DBSCANClustering(umap_embedding)
+# dbscan_clustering.tune_hyperparameters()
+# dbscan_exp1 = dbscan_clustering.fit_model()
+# dbscan_clustering.visualize_clusters_and_outliers_3D(umap_plot, 'All feature types')
+# db_labels = dbscan_clustering.output_label()
+# sil_ex1.append(dbscan_clustering.silhoutte())
+# cal_ex1.append(dbscan_clustering.calinski())
 
-# Initialize the class to retrieve data
-db_retriever = ClusteringDataRetriever(data_exp1, db_labels)
-df_with_labels = db_retriever.get_data_with_labels()
-print()
-print('Dataset with Labels from DBSCAN in Exp 1')
-print(df_with_labels.head())
-for label in np.unique(db_labels):
-    if label != -1:
-        print()
-        print(f'Records found in cluster {label} from DBSCAN in Exp 1')
-        print(db_retriever.get_cluster_data(label))
-        print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-        print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-        print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-print('Records classified as noise')
-print(db_retriever.get_noise_data())
+# # Initialize the class to retrieve data
+# db_retriever = ClusteringDataRetriever(data_exp1, db_labels)
+# df_with_labels = db_retriever.get_data_with_labels()
+# print()
+# print('Dataset with Labels from DBSCAN in Exp 1')
+# print(df_with_labels.head())
+# for label in np.unique(db_labels):
+#     if label != -1:
+#         print()
+#         print(f'Records found in cluster {label} from DBSCAN in Exp 1')
+#         print(db_retriever.get_cluster_data(label))
+#         print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+#         print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+#         print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+# print('Records classified as noise')
+# print(db_retriever.get_noise_data())
 
-print()
-print("=" * 50)
-print('EXP 2: USING ONLY NUMERICAL AND CATEGORICAL FEATURES')
-print("=" * 50)
+# print()
+# print("=" * 50)
+# print('EXP 2: USING ONLY NUMERICAL AND CATEGORICAL FEATURES')
+# print("=" * 50)
 
-sil_ex2 = []
-cal_ex2 = []
+# sil_ex2 = []
+# cal_ex2 = []
 
-# Normalise every existing feature
-scaler = StandardScaler()
-chunk_size = 100
-for i in range(0, df_num.shape[0], chunk_size):
-    df_num.iloc[i:i + chunk_size] = scaler.fit_transform(df_num.iloc[i:i + chunk_size])
-df_no_text = pd.concat([df_num, df_cate, df_gender], axis=1)
-print()
-print("Data with Only Numerical and Categorical Features")
-print(df_no_text.info())
-print()
+# # Normalise every existing feature
+# scaler = StandardScaler()
+# chunk_size = 100
+# for i in range(0, df_num.shape[0], chunk_size):
+#     df_num.iloc[i:i + chunk_size] = scaler.fit_transform(df_num.iloc[i:i + chunk_size])
+# df_no_text = pd.concat([df_num, df_cate, df_gender], axis=1)
+# print()
+# print("Data with Only Numerical and Categorical Features")
+# print(df_no_text.info())
+# print()
 
-df_no_text = df_no_text.dropna()
-df_no_text_wg = df_no_text.copy()
-print('Removing NaN values...')
+# df_no_text = df_no_text.dropna()
+# df_no_text_wg = df_no_text.copy()
+# print('Removing NaN values...')
 
-# Drop gender feature before clustering
-data_exp2 = df_no_text.drop(columns=['gender', 'gender:confidence'])
-print('Dropping gender and gender:confidence...')
+# # Drop gender feature before clustering
+# data_exp2 = df_no_text.drop(columns=['gender', 'gender:confidence'])
+# print('Dropping gender and gender:confidence...')
 
-# Check No. of records after drop NaN values
-print()
-print("Dataset for Exp 2")
-print(data_exp2.info())
-print()
-print(data_exp2.head())
+# # Check No. of records after drop NaN values
+# print()
+# print("Dataset for Exp 2")
+# print(data_exp2.info())
+# print()
+# print(data_exp2.head())
 
-# Apply UMAP for dimensionality reduction
-print('Applying UMAP for dim reduction...')
-umap_model = umap.UMAP(n_neighbors=30,min_dist=0.1, n_components=3, random_state=42)
-umap_embedding = umap_model.fit_transform(data_exp2)
-print(umap_embedding.shape)
-# umap_embedding = umap_embedding.astype(np.float32)
+# # Apply UMAP for dimensionality reduction
+# print('Applying UMAP for dim reduction...')
+# umap_model = umap.UMAP(n_neighbors=30,min_dist=0.1, n_components=3, random_state=42)
+# umap_embedding = umap_model.fit_transform(data_exp2)
+# print(umap_embedding.shape)
+# # umap_embedding = umap_embedding.astype(np.float32)
 
-# K-Means Clustering
-print()
-print('Performing K-Means Clustering...')
-kmeans_clustering = KMeansClustering(data_exp2)
-kmeans_clustering.tune_hyperparameters()
-kmeans_exp2 = kmeans_clustering.fit_model()
-kmeans_clustering.visualize_clusters(umap_embedding, 'Numerical and categorical features')  # Visualize clusters
-kmeans_clustering.plot_elbow_method()
-k_labels = kmeans_clustering.output_label()
-sil_ex2.append(kmeans_clustering.silhoutte())
-cal_ex2.append(kmeans_clustering.calinski())
+# # K-Means Clustering
+# print()
+# print('Performing K-Means Clustering...')
+# kmeans_clustering = KMeansClustering(data_exp2)
+# kmeans_clustering.tune_hyperparameters()
+# kmeans_exp2 = kmeans_clustering.fit_model()
+# kmeans_clustering.visualize_clusters(umap_embedding, 'Numerical and categorical features')  # Visualize clusters
+# kmeans_clustering.plot_elbow_method()
+# k_labels = kmeans_clustering.output_label()
+# sil_ex2.append(kmeans_clustering.silhoutte())
+# cal_ex2.append(kmeans_clustering.calinski())
 
-k_retriever = ClusteringDataRetriever(df_no_text_wg, k_labels)
-df_with_labels = k_retriever.get_data_with_labels()
-print()
-print('Dataset with Labels from KMeans in Exp 2')
-print(df_with_labels.head())
-for label in np.unique(k_labels):
-    print()
-    print(f'Records found in cluster {label} from KMeans in Exp 2')
-    print(k_retriever.get_cluster_data(label))
-    print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-    print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-    print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+# k_retriever = ClusteringDataRetriever(df_no_text_wg, k_labels)
+# df_with_labels = k_retriever.get_data_with_labels()
+# print()
+# print('Dataset with Labels from KMeans in Exp 2')
+# print(df_with_labels.head())
+# for label in np.unique(k_labels):
+#     print()
+#     print(f'Records found in cluster {label} from KMeans in Exp 2')
+#     print(k_retriever.get_cluster_data(label))
+#     print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+#     print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+#     print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
 
-# DBSCAN Clustering
-print()
-print('Performing DBSCAN Clustering...')
-dbscan_clustering = DBSCANClustering(data_exp2)
-dbscan_clustering.tune_hyperparameters()  # Tune DBSCAN hyperparameters
-dbscan_exp2 = dbscan_clustering.fit_model()  # Fit the DBSCAN model
-dbscan_clustering.visualize_clusters_and_outliers_3D(umap_embedding, 'numerical and categorical features')  # Plot 3D noise points and valid clusters
-db_labels = dbscan_clustering.output_label()
-sil_ex2.append(dbscan_clustering.silhoutte())
-cal_ex2.append(dbscan_clustering.calinski())
+# # DBSCAN Clustering
+# print()
+# print('Performing DBSCAN Clustering...')
+# dbscan_clustering = DBSCANClustering(data_exp2)
+# dbscan_clustering.tune_hyperparameters()  # Tune DBSCAN hyperparameters
+# dbscan_exp2 = dbscan_clustering.fit_model()  # Fit the DBSCAN model
+# dbscan_clustering.visualize_clusters_and_outliers_3D(umap_embedding, 'numerical and categorical features')  # Plot 3D noise points and valid clusters
+# db_labels = dbscan_clustering.output_label()
+# sil_ex2.append(dbscan_clustering.silhoutte())
+# cal_ex2.append(dbscan_clustering.calinski())
 
 
-db_retriever = ClusteringDataRetriever(df_no_text_wg, db_labels)
-df_with_labels = db_retriever.get_data_with_labels()
-print()
-print('Dataset with Labels from DBSCAN in Exp 2')
-print(df_with_labels.head())
-for label in np.unique(db_labels):
-    if label != -1:
-        print()
-        print(f'Records found in cluster {label} from DBSCAN in Exp 2')
-        print(db_retriever.get_cluster_data(label))
-        print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-        print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-        print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-print('Records classified as noise')
-print(db_retriever.get_noise_data())
+# db_retriever = ClusteringDataRetriever(df_no_text_wg, db_labels)
+# df_with_labels = db_retriever.get_data_with_labels()
+# print()
+# print('Dataset with Labels from DBSCAN in Exp 2')
+# print(df_with_labels.head())
+# for label in np.unique(db_labels):
+#     if label != -1:
+#         print()
+#         print(f'Records found in cluster {label} from DBSCAN in Exp 2')
+#         print(db_retriever.get_cluster_data(label))
+#         print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+#         print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+#         print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+# print('Records classified as noise')
+# print(db_retriever.get_noise_data())
 
-print()
-print("=" * 50)
-print('EXP 3: USING ONLY TEXT FEATURES')
-print("=" * 50)
+# print()
+# print("=" * 50)
+# print('EXP 3: USING ONLY TEXT FEATURES')
+# print("=" * 50)
 
-sil_ex3 = []
-cal_ex3 = []
-# Merge with main dataframe
-df_with_text = pd.concat([tfidf_desc_df, tfidf_text_df], axis=1)
-# Normalise every existing feature
-scaler = StandardScaler()
-chunk_size = 100
-for i in range(0, df_with_text.shape[0], chunk_size):
-    df_with_text.iloc[i:i + chunk_size] = scaler.fit_transform(df_with_text.iloc[i:i + chunk_size])
+# sil_ex3 = []
+# cal_ex3 = []
+# # Merge with main dataframe
+# df_with_text = pd.concat([tfidf_desc_df, tfidf_text_df], axis=1)
+# # Normalise every existing feature
+# scaler = StandardScaler()
+# chunk_size = 100
+# for i in range(0, df_with_text.shape[0], chunk_size):
+#     df_with_text.iloc[i:i + chunk_size] = scaler.fit_transform(df_with_text.iloc[i:i + chunk_size])
 
-df_with_text_wg = pd.concat([df_with_text, df_gender], axis=1)
-# Drop NaN values before clustering
-df_with_text_wg = df_with_text_wg.dropna()
-data_exp3 = df_with_text_wg.drop(columns=['gender', 'gender:confidence'])
+# df_with_text_wg = pd.concat([df_with_text, df_gender], axis=1)
+# # Drop NaN values before clustering
+# df_with_text_wg = df_with_text_wg.dropna()
+# data_exp3 = df_with_text_wg.drop(columns=['gender', 'gender:confidence'])
 
-# Drop the gender features before clustering
+# # Drop the gender features before clustering
 
-print('Dataset for Exp 3')
-print(data_exp3.info())
-print()
-print(data_exp3.head())
+# print('Dataset for Exp 3')
+# print(data_exp3.info())
+# print()
+# print(data_exp3.head())
 
-print('Applying UMAP for dim reduction...')
-umap_model = umap.UMAP()
-umap_embedding_t = umap_model.fit_transform(data_exp3)
-umap_embedding = umap.UMAP(n_neighbors=30,min_dist=0.1, n_components=3, random_state=42).fit_transform(data_exp3)
+# print('Applying UMAP for dim reduction...')
+# umap_model = umap.UMAP()
+# umap_embedding_t = umap_model.fit_transform(data_exp3)
+# umap_embedding = umap.UMAP(n_neighbors=30,min_dist=0.1, n_components=3, random_state=42).fit_transform(data_exp3)
 
-# K-Means Clustering
-print()
-print('Performing K-Means Clustering...')
-kmeans_clustering = KMeansClustering(umap_embedding_t)
-kmeans_clustering.tune_hyperparameters()
-kmeans_exp3 = kmeans_clustering.fit_model()
-kmeans_clustering.visualize_clusters(umap_embedding, 'Text features')
-kmeans_clustering.plot_elbow_method()
-k_labels = kmeans_clustering.output_label()
-sil_ex3.append(kmeans_clustering.silhoutte())
-cal_ex3.append(kmeans_clustering.calinski())
+# # K-Means Clustering
+# print()
+# print('Performing K-Means Clustering...')
+# kmeans_clustering = KMeansClustering(umap_embedding_t)
+# kmeans_clustering.tune_hyperparameters()
+# kmeans_exp3 = kmeans_clustering.fit_model()
+# kmeans_clustering.visualize_clusters(umap_embedding, 'Text features')
+# kmeans_clustering.plot_elbow_method()
+# k_labels = kmeans_clustering.output_label()
+# sil_ex3.append(kmeans_clustering.silhoutte())
+# cal_ex3.append(kmeans_clustering.calinski())
 
-k_retriever = ClusteringDataRetriever(df_with_text_wg, k_labels)
-df_with_labels = k_retriever.get_data_with_labels()
-print()
-print('Dataset with Labels from KMeans in Exp 3')
-print(df_with_labels.head())
-for label in np.unique(k_labels):
-    print()
-    print(f'Records found in cluster {label} from KMeans in Exp 3')
-    print(k_retriever.get_cluster_data(label))
-    print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-    print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-    print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+# k_retriever = ClusteringDataRetriever(df_with_text_wg, k_labels)
+# df_with_labels = k_retriever.get_data_with_labels()
+# print()
+# print('Dataset with Labels from KMeans in Exp 3')
+# print(df_with_labels.head())
+# for label in np.unique(k_labels):
+#     print()
+#     print(f'Records found in cluster {label} from KMeans in Exp 3')
+#     print(k_retriever.get_cluster_data(label))
+#     print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+#     print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+#     print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
 
-# DBSCANClustering
-print()
-print('Performing DBSCAN Clustering...')
-dbscan_clustering = DBSCANClustering(umap_embedding_t)
-dbscan_clustering.tune_hyperparameters()
-dbscan_exp3 = dbscan_clustering.fit_model()
-dbscan_clustering.visualize_clusters_and_outliers_3D(umap_embedding, 'Text features')
-db_labels = dbscan_clustering.output_label()
-sil_ex3.append(dbscan_clustering.silhoutte())
-cal_ex3.append(dbscan_clustering.calinski())
+# # DBSCANClustering
+# print()
+# print('Performing DBSCAN Clustering...')
+# dbscan_clustering = DBSCANClustering(umap_embedding_t)
+# dbscan_clustering.tune_hyperparameters()
+# dbscan_exp3 = dbscan_clustering.fit_model()
+# dbscan_clustering.visualize_clusters_and_outliers_3D(umap_embedding, 'Text features')
+# db_labels = dbscan_clustering.output_label()
+# sil_ex3.append(dbscan_clustering.silhoutte())
+# cal_ex3.append(dbscan_clustering.calinski())
 
-db_retriever = ClusteringDataRetriever(df_with_text_wg, db_labels)
-df_with_labels = db_retriever.get_data_with_labels()
-print()
-print('Dataset with Labels from DBSCAN in Exp 3')
-print(df_with_labels.head())
-for label in np.unique(db_labels):
-    if label != -1:
-        print()
-        print(f'Records found in cluster {label} from DBSCAN in Exp 3')
-        print(db_retriever.get_cluster_data(label))
-        print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-        print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-        print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
-print('Records classified as noise')
-print(db_retriever.get_noise_data())
+# db_retriever = ClusteringDataRetriever(df_with_text_wg, db_labels)
+# df_with_labels = db_retriever.get_data_with_labels()
+# print()
+# print('Dataset with Labels from DBSCAN in Exp 3')
+# print(df_with_labels.head())
+# for label in np.unique(db_labels):
+#     if label != -1:
+#         print()
+#         print(f'Records found in cluster {label} from DBSCAN in Exp 3')
+#         print(db_retriever.get_cluster_data(label))
+#         print(f'No. of records with gender 0 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 0) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+#         print(f'No. of records with gender 1 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 1) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+#         print(f'No. of records with gender 2 in cluster {label} is {df_with_labels[(df_with_labels["gender"] == 2) & (df_with_labels["Cluster_Label"] == label)].shape[0]}')
+# print('Records classified as noise')
+# print(db_retriever.get_noise_data())
 
-print()
-print('---- VISUALIZE THE METRIC EVALUATION ----')
+# print()
+# print('---- VISUALIZE THE METRIC EVALUATION ----')
 
-# Metric functions
-model_names = ['KMeans', 'DBSCAN']
+# # Metric functions
+# model_names = ['KMeans', 'DBSCAN']
 
-sil_scores = [sil_ex1, sil_ex2, sil_ex3]
-cal_scores = [cal_ex1, cal_ex2, cal_ex3]
+# sil_scores = [sil_ex1, sil_ex2, sil_ex3]
+# cal_scores = [cal_ex1, cal_ex2, cal_ex3]
 
-plot_silhouette_bar_across_experiments(model_names, sil_scores)
-visualize_ch_index_across_experiments(model_names, cal_scores)
+# plot_silhouette_bar_across_experiments(model_names, sil_scores)
+# visualize_ch_index_across_experiments(model_names, cal_scores)
 
 
 
@@ -1132,6 +1132,7 @@ scatter_plot(y, y_tot_pred, "Boosted Regression Tree with Vectorised Text/Desc F
 # ==============================analyze without text features=============================================
 columns_to_drop = [col for col in df_preprocessed_reg.columns if col.startswith(('desc_', 'text_'))]
 df_preprocessed_non_text = df_preprocessed_reg.drop(columns=columns_to_drop)
+df_preprocessed_non_text2 = df_preprocessed_non_text.copy()
 print(df_preprocessed_non_text)
 
 print()
@@ -1250,6 +1251,60 @@ train_misclassify = misclassified_df[~misclassified_df.index.isin(X_train_lin.in
 
 scatter_plot(y, y_lin_tot_pred, "Linear Regression Tree with Vectorised Text/Desc Features")
 scatterplot_mistaken_points(misclassified_df, X_train_lin, "Linear Regression Tree with Vectorised Text/Desc Features")
+
+#================================Lin reg without text=======================================================
+#================================Linear regression without text features============================
+print()
+print("=" * 50)
+print('Linear Regression Tree without Vectorised Text/Desc Features')
+print("=" * 50)
+
+X_train_lin = sm.add_constant(X_train_non_text)
+X_test_lin = sm.add_constant(X_test_non_text)
+df_preprocessed_lin = sm.add_constant(df_preprocessed_non_text2)
+model = sm.OLS(y_train, X_train_lin)  # Ordinary least squares (unregularized)
+results = model.fit()
+
+#run predictions
+y_lin_pred = results.predict(X_test_lin)
+y_lin_tot_pred = results.predict(df_preprocessed_lin)
+y_lin_train = results.predict(X_train_lin)
+
+# Evaluate performance using Mean Squared Error
+mse_test = mean_squared_error(y_test, y_lin_pred)
+mse_total = mean_squared_error(y, y_lin_tot_pred)
+mse_train = mean_squared_error(y_train, y_lin_train)
+
+print(f"Mean Squared Error (Train): {mse_train:.4f}")
+print(f"Mean Squared Error (Test): {mse_test:.4f}")
+print(f"Mean Squared Error (Total): {mse_total:.4f}")
+
+# PLOT MSE
+labels = ['Train', 'Test', 'Total']
+mse_values = [mse_train, mse_test, mse_total]
+plt.figure(figsize=(8, 6))
+plt.bar(labels, mse_values, color=['skyblue', 'salmon', 'lightgreen'])
+plt.suptitle('Linear Regression Tree without Vectorised Textual Features', fontsize=16)
+plt.title('Mean Squared Error Comparison', fontsize=14)
+plt.xlabel('Dataset Type')
+plt.ylabel('MSE')
+plt.show()
+
+#final preprocess
+df_preprocessed_lin["difference"] = y.to_numpy() - y_lin_tot_pred
+y_reset = y.reset_index(drop=True)
+df_preprocessed_lin["gender:confidence"] = y
+df_preprocessed_lin["gender_confidence_pred"] = y_lin_tot_pred
+
+
+#identify mistaken users
+misclassified_df = df_preprocessed_lin[(df_preprocessed_lin["difference"] > 0.1) & (df_preprocessed_lin["gender_confidence_pred"] < 0.85)]
+non_train_misclassify = misclassified_df[misclassified_df.index.isin(X_train_lin.index)]
+train_misclassify = misclassified_df[~misclassified_df.index.isin(X_train_lin.index)]
+
+scatter_plot(y, y_lin_tot_pred, "Linear Regression Tree with Vectorised Text/Desc Features")
+scatterplot_mistaken_points(misclassified_df, X_train_lin, "Linear Regression Tree without Vectorised Text/Desc Features")
+
 
 
 # ================================Identity final mistaken samples====================================
