@@ -1249,6 +1249,8 @@ misclassified_df = df_preprocessed_lin[(df_preprocessed_lin["difference"] > 0.1)
 non_train_misclassify = misclassified_df[misclassified_df.index.isin(X_train_lin.index)]
 train_misclassify = misclassified_df[~misclassified_df.index.isin(X_train_lin.index)]
 
+misclassified_df_lin_reg = misclassified_df.copy()
+
 scatter_plot(y, y_lin_tot_pred, "Linear Regression Tree with Vectorised Text/Desc Features")
 scatterplot_mistaken_points(misclassified_df, X_train_lin, "Linear Regression Tree with Vectorised Text/Desc Features")
 
@@ -1512,3 +1514,97 @@ plt.figure(figsize=(10, 6))
 sns.heatmap(rules[['support', 'confidence', 'lift']].corr(), annot=True, cmap='coolwarm')
 plt.title('Correlation between Support, Confidence, and Lift')
 plt.show()
+
+
+
+
+# ============================== AMENDMENT ==============================
+print()
+print()
+print('---- AMENDMENT ----')
+
+mistaken_index = misclassified_df_reg.index.union(misclassified_df_lin_reg.index)
+df_truth = df_preprocessed.copy()
+df_mistaken = df_preprocessed.loc[mistaken_index].copy()
+df_amended = df_mistaken.copy()
+vectorized_features = [col for col in df_truth.columns if col.startswith('desc_') or col.startswith('text_')]
+df_truth_vectors = df_truth[vectorized_features]
+df_mistaken_vectors = df_mistaken[vectorized_features]
+
+similarities = cosine_similarity(df_mistaken_vectors, df_truth_vectors)
+best_matches_indices = similarities.argmax(axis=1)
+df_amended['gender'] = df_truth.loc[best_matches_indices, 'gender'].values
+
+## Comparative Analysis
+
+# Calculate the number of changes made
+num_changes = (df_amended['gender'] != df_mistaken['gender']).sum()
+
+# Calculate the percentage of records amended
+percent_amended = (num_changes / len(df_amended)) * 100
+
+## Impact on Statistics
+
+# Function to calculate gender distribution
+def gender_distribution(df):
+    return df['gender'].value_counts(normalize=True) * 100
+
+# Calculate gender distributions
+original_dist = gender_distribution(df_mistaken)
+amended_dist = gender_distribution(df_amended)
+
+# Calculate the difference in distributions
+dist_difference = amended_dist - original_dist
+
+## Summary Report
+
+print("Amendment Summary Report")
+print("=======================")
+print(f"Total records processed: {len(df_amended)}")
+print(f"Number of records amended: {num_changes}")
+print(f"Percentage of records amended: {percent_amended:.2f}%")
+print("\nGender Distribution (%):")
+print("------------------------")
+print("Category    Mistaken    Amended")
+for category in original_dist.index:
+    print(f"{category:<12} {original_dist.get(category, 0):.2f}        {amended_dist.get(category, 0):.2f}")
+
+print("\nDistribution Changes:")
+print("---------------------")
+for category in dist_difference.index:
+    print(f"{category}: {dist_difference[category]:+.2f}%")
+
+## Create a figure with subplots
+fig, axs = plt.subplots(2, 2, figsize=(20, 16))
+fig.suptitle("Comparative Analysis of Gender Amendment", fontsize=20)
+
+## 1. Bar plot: Gender Distribution Comparison
+axs[0, 0].bar(original_dist.index, original_dist.values, alpha=0.5, label='Original')
+axs[0, 0].bar(amended_dist.index, amended_dist.values, alpha=0.5, label='Amended')
+axs[0, 0].set_title("Gender Distribution Comparison")
+axs[0, 0].set_ylabel("Percentage")
+axs[0, 0].legend()
+
+## 2. Pie charts: Before and After Amendment
+def plot_pie(ax, data, title):
+    ax.pie(data.values, labels=data.index, autopct='%1.1f%%', startangle=90)
+    ax.set_title(title)
+
+plot_pie(axs[0, 1], original_dist, "Gender Distribution Before Amendment")
+plot_pie(axs[1, 0], amended_dist, "Gender Distribution After Amendment")
+
+## 3. Heatmap: Confusion Matrix
+cm = confusion_matrix(df_mistaken['gender'], df_amended['gender'], labels=df_mistaken['gender'].unique())
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=df_mistaken['gender'].unique(), 
+            yticklabels=df_mistaken['gender'].unique(), ax=axs[1, 1])
+axs[1, 1].set_title("Confusion Matrix: After vs Before")
+axs[1, 1].set_xlabel("After")
+axs[1, 1].set_ylabel("Before")
+
+## Adjust layout and save
+plt.tight_layout()
+plt.savefig('gender_amendment_analysis.png', dpi=300, bbox_inches='tight')
+plt.show()
+plt.close()
+
+print("Visualizations have been saved as 'gender_amendment_analysis.png'")
