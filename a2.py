@@ -1302,7 +1302,7 @@ misclassified_df = df_preprocessed_lin[(df_preprocessed_lin["difference"] > 0.1)
 non_train_misclassify = misclassified_df[misclassified_df.index.isin(X_train_lin.index)]
 train_misclassify = misclassified_df[~misclassified_df.index.isin(X_train_lin.index)]
 
-scatter_plot(y, y_lin_tot_pred, "Linear Regression Tree with Vectorised Text/Desc Features")
+scatter_plot(y, y_lin_tot_pred, "Linear Regression Tree without Vectorised Text/Desc Features")
 scatterplot_mistaken_points(misclassified_df, X_train_lin, "Linear Regression Tree without Vectorised Text/Desc Features")
 
 
