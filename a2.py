@@ -63,6 +63,7 @@ from sklearn.metrics import (
     mean_squared_error,
     silhouette_score
 )
+from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
