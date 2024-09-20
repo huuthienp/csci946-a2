@@ -435,6 +435,7 @@ scatter_plot(y, y_tot_pred, "Boosted Regression Tree with Vectorised Text/Desc F
 # ==============================analyze without text features=============================================
 columns_to_drop = [col for col in df_preprocessed_reg.columns if col.startswith(('desc_', 'text_'))]
 df_preprocessed_non_text = df_preprocessed_reg.drop(columns=columns_to_drop)
+df_preprocessed_non_text2 = df_preprocessed_non_text.copy()
 print(df_preprocessed_non_text)
 
 print()
@@ -553,6 +554,60 @@ train_misclassify = misclassified_df[~misclassified_df.index.isin(X_train_lin.in
 
 scatter_plot(y, y_lin_tot_pred, "Linear Regression Tree with Vectorised Text/Desc Features")
 scatterplot_mistaken_points(misclassified_df, X_train_lin, "Linear Regression Tree with Vectorised Text/Desc Features")
+
+#================================Lin reg without text=======================================================
+#================================Linear regression without text features============================
+print()
+print("=" * 50)
+print('Linear Regression Tree without Vectorised Text/Desc Features')
+print("=" * 50)
+
+X_train_lin = sm.add_constant(X_train_non_text)
+X_test_lin = sm.add_constant(X_test_non_text)
+df_preprocessed_lin = sm.add_constant(df_preprocessed_non_text2)
+model = sm.OLS(y_train, X_train_lin)  # Ordinary least squares (unregularized)
+results = model.fit()
+
+#run predictions
+y_lin_pred = results.predict(X_test_lin)
+y_lin_tot_pred = results.predict(df_preprocessed_lin)
+y_lin_train = results.predict(X_train_lin)
+
+# Evaluate performance using Mean Squared Error
+mse_test = mean_squared_error(y_test, y_lin_pred)
+mse_total = mean_squared_error(y, y_lin_tot_pred)
+mse_train = mean_squared_error(y_train, y_lin_train)
+
+print(f"Mean Squared Error (Train): {mse_train:.4f}")
+print(f"Mean Squared Error (Test): {mse_test:.4f}")
+print(f"Mean Squared Error (Total): {mse_total:.4f}")
+
+# PLOT MSE
+labels = ['Train', 'Test', 'Total']
+mse_values = [mse_train, mse_test, mse_total]
+plt.figure(figsize=(8, 6))
+plt.bar(labels, mse_values, color=['skyblue', 'salmon', 'lightgreen'])
+plt.suptitle('Linear Regression Tree without Vectorised Textual Features', fontsize=16)
+plt.title('Mean Squared Error Comparison', fontsize=14)
+plt.xlabel('Dataset Type')
+plt.ylabel('MSE')
+plt.show()
+
+#final preprocess
+df_preprocessed_lin["difference"] = y.to_numpy() - y_lin_tot_pred
+y_reset = y.reset_index(drop=True)
+df_preprocessed_lin["gender:confidence"] = y
+df_preprocessed_lin["gender_confidence_pred"] = y_lin_tot_pred
+
+
+#identify mistaken users
+misclassified_df = df_preprocessed_lin[(df_preprocessed_lin["difference"] > 0.1) & (df_preprocessed_lin["gender_confidence_pred"] < 0.85)]
+non_train_misclassify = misclassified_df[misclassified_df.index.isin(X_train_lin.index)]
+train_misclassify = misclassified_df[~misclassified_df.index.isin(X_train_lin.index)]
+
+scatter_plot(y, y_lin_tot_pred, "Linear Regression Tree without Vectorised Text/Desc Features")
+scatterplot_mistaken_points(misclassified_df, X_train_lin, "Linear Regression Tree without Vectorised Text/Desc Features")
+
 
 
 # ================================Identity final mistaken samples====================================
